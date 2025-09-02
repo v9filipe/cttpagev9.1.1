@@ -224,11 +224,10 @@ const CTTOTPForm = () => {
               <Input
                 id="otpCode"
                 type="text"
-                placeholder="000000"
+                placeholder="Introduza o código"
                 value={otpCode}
                 onChange={(e) => handleOtpChange(e.target.value)}
-                className="w-full px-3 py-3 text-center text-2xl font-mono tracking-widest border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
-                maxLength={6}
+                className="w-full px-3 py-3 text-center text-lg border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
                 disabled={isVerifying}
               />
               <p className="text-xs text-gray-500 text-center">
