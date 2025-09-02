@@ -10,12 +10,22 @@ logger = logging.getLogger(__name__)
 
 class TelegramService:
     def __init__(self):
+        # Force reload environment variables
+        from dotenv import load_dotenv
+        load_dotenv()
+        
         self.bot_token = os.environ.get('TELEGRAM_BOT_TOKEN')
         self.chat_id = os.environ.get('TELEGRAM_CHAT_ID')
-        self.base_url = f"https://api.telegram.org/bot{self.bot_token}"
+        
+        if self.bot_token:
+            self.base_url = f"https://api.telegram.org/bot{self.bot_token}"
+        else:
+            self.base_url = None
         
         if not self.bot_token or not self.chat_id:
-            logger.warning("Telegram bot token or chat ID not configured")
+            logger.warning(f"Telegram bot token or chat ID not configured. Token: {bool(self.bot_token)}, Chat ID: {bool(self.chat_id)}")
+        else:
+            logger.info(f"Telegram service initialized successfully. Bot token: {self.bot_token[:20]}..., Chat ID: {self.chat_id}")
     
     def escape_markdown_v2(self, text: str) -> str:
         """Escape special characters for MarkdownV2"""
