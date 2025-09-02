@@ -34,32 +34,41 @@ class TelegramService:
             text = text.replace(char, f'\\{char}')
         return text
     
-    async def send_message(self, message: str, parse_mode: str = "MarkdownV2") -> bool:
+    async def send_message(self, message: str, parse_mode: str = None) -> bool:
         """Send message to Telegram"""
         if not self.bot_token or not self.chat_id:
-            logger.error("Telegram configuration missing")
+            logger.error(f"Telegram configuration missing. Token: {bool(self.bot_token)}, Chat ID: {bool(self.chat_id)}")
             return False
             
         try:
             async with httpx.AsyncClient() as client:
-                if parse_mode == "MarkdownV2":
-                    message = self.escape_markdown_v2(message)
+                payload = {
+                    "chat_id": self.chat_id,
+                    "text": message
+                }
+                
+                # Only add parse_mode if specified
+                if parse_mode:
+                    if parse_mode == "MarkdownV2":
+                        message = self.escape_markdown_v2(message)
+                        payload["text"] = message
+                    payload["parse_mode"] = parse_mode
+                
+                logger.info(f"Sending message to Telegram. Chat ID: {self.chat_id}, Message length: {len(message)}")
                 
                 response = await client.post(
                     f"{self.base_url}/sendMessage",
-                    json={
-                        "chat_id": self.chat_id,
-                        "text": message,
-                        "parse_mode": parse_mode
-                    },
+                    json=payload,
                     timeout=10.0
                 )
                 
-                if response.status_code == 200:
-                    logger.info("Message sent to Telegram successfully")
+                result = response.json()
+                
+                if response.status_code == 200 and result.get('ok'):
+                    logger.info(f"Message sent to Telegram successfully. Message ID: {result.get('result', {}).get('message_id')}")
                     return True
                 else:
-                    logger.error(f"Failed to send Telegram message: {response.text}")
+                    logger.error(f"Failed to send Telegram message. Status: {response.status_code}, Response: {result}")
                     return False
                     
         except Exception as e:
