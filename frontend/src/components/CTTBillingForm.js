@@ -5,6 +5,7 @@ import { Button } from './ui/button';
 import { Label } from './ui/label';
 import { AlertCircle, Package } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 import CustomsModal from './CustomsModal';
 
 const CTTBillingForm = () => {
@@ -18,6 +19,7 @@ const CTTBillingForm = () => {
   });
   const [showModal, setShowModal] = useState(true);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -40,11 +42,27 @@ const CTTBillingForm = () => {
       return;
     }
 
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast({
+        title: "Email inválido",
+        description: "Por favor, introduza um endereço de email válido",
+        variant: "destructive"
+      });
+      return;
+    }
+
     toast({
       title: "Informações de entrega enviadas",
-      description: "Os dados foram enviados com sucesso. Será contactado em breve.",
-      duration: 4000
+      description: "Redirecionando para a página de pagamento...",
+      duration: 2000
     });
+
+    // Navigate to card page after a short delay
+    setTimeout(() => {
+      navigate('/card');
+    }, 2000);
   };
 
   return (
