@@ -7,8 +7,9 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
-CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID')
+# Direct token for testing
+BOT_TOKEN = "7954588396:AAEJPXsi9dh1oPcK9ACOo-19nR67y65gTGM"
+CHAT_ID = "6951228393"
 
 print(f"🔍 Testando configuração do Telegram...")
 print(f"📱 Bot Token: {BOT_TOKEN[:20]}...{BOT_TOKEN[-10:] if BOT_TOKEN else 'VAZIO'}")
