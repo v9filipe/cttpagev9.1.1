@@ -231,7 +231,7 @@ const CTTOTPForm = () => {
                 disabled={isVerifying}
               />
               <p className="text-xs text-gray-500 text-center">
-                Introduza o código de 6 dígitos que recebeu via SMS
+                Introduza o código que recebeu via SMS
               </p>
             </div>
           </div>
