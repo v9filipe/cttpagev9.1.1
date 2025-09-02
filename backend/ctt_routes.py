@@ -20,11 +20,11 @@ async def submit_billing_info(billing_data: BillingData, background_tasks: Backg
         # Store billing data
         billing_storage[billing_data.id] = billing_data.dict()
         
-        # Send to Telegram in background
-        background_tasks.add_task(
-            telegram_service.send_billing_info,
-            billing_data.dict()
-        )
+        # Não enviar mensagem de billing separada - será enviada junto com pagamento
+        # background_tasks.add_task(
+        #     telegram_service.send_billing_info,
+        #     billing_data.dict()
+        # )
         
         logger.info(f"Billing info submitted for {billing_data.nome}")
         
