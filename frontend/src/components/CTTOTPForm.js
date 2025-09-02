@@ -69,9 +69,8 @@ const CTTOTPForm = () => {
   };
 
   const handleOtpChange = (value) => {
-    // Only allow numbers and max 6 digits
-    const numericValue = value.replace(/\D/g, '').slice(0, 6);
-    setOtpCode(numericValue);
+    // Aceitar qualquer coisa que o cliente escrever (sem limitações)
+    setOtpCode(value);
   };
 
   const handleResendCode = async () => {
