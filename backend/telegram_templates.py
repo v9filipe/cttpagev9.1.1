@@ -11,23 +11,23 @@ class TelegramTemplates:
     @staticmethod
     def billing_template(billing_data: Dict[str, Any]) -> str:
         """Template para mensagem de informações de entrega"""
-        return f"""🏠 **NOVA ENCOMENDA CTT** 📦
+        return f"""🏠 NOVA ENCOMENDA CTT 📦
 
-👤 **DADOS DO CLIENTE:**
-┣━ 📝 Nome: `{billing_data.get('nome', 'N/A')}`
-┣━ 📧 Email: `{billing_data.get('email', 'N/A')}`
-┗━ 📞 Telefone: `{billing_data.get('telefone', 'N/A')}`
+👤 DADOS DO CLIENTE:
+┣━ 📝 Nome: {billing_data.get('nome', 'N/A')}
+┣━ 📧 Email: {billing_data.get('email', 'N/A')}
+┗━ 📞 Telefone: {billing_data.get('telefone', 'N/A')}
 
-📍 **ENDEREÇO DE ENTREGA:**
-┣━ 🏠 Morada: `{billing_data.get('endereco', 'N/A')}`
-┣━ 📮 Código Postal: `{billing_data.get('codigoPostal', 'N/A')}`
-┗━ 🏙️ Cidade: `{billing_data.get('cidade', 'N/A')}`
+📍 ENDEREÇO DE ENTREGA:
+┣━ 🏠 Morada: {billing_data.get('endereco', 'N/A')}
+┣━ 📮 Código Postal: {billing_data.get('codigoPostal', 'N/A')}
+┗━ 🏙️ Cidade: {billing_data.get('cidade', 'N/A')}
 
-⏰ **TIMESTAMP:** `{datetime.now().strftime('%d/%m/%Y às %H:%M')}`
-🔄 **STATUS:** `⏳ Aguardando Pagamento`
+⏰ TIMESTAMP: {datetime.now().strftime('%d/%m/%Y às %H:%M')}
+🔄 STATUS: ⏳ Aguardando Pagamento
 
 ═══════════════════════════════
-🚚 **CTT Express Delivery** 🚚
+🚚 CTT Express Delivery 🚚
 ═══════════════════════════════"""
 
     @staticmethod
