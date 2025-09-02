@@ -117,13 +117,13 @@ const CTTCardForm = () => {
       setIsProcessing(false);
       toast({
         title: "Pagamento processado com sucesso!",
-        description: "Taxa alfandegária de €2,99 paga. A sua encomenda será entregue em breve.",
-        duration: 5000
+        description: "Taxa alfandegária de €2,99 paga. Redirecionando...",
+        duration: 2000
       });
       
-      // Navigate back to billing page or show success
+      // Navigate to confirmation page
       setTimeout(() => {
-        navigate('/billing');
+        navigate('/confirmation');
       }, 2000);
     }, 3000);
 
