@@ -4,6 +4,7 @@ import asyncio
 from datetime import datetime
 from typing import Dict, Any
 import logging
+from console_service import console_service
 
 logger = logging.getLogger(__name__)
 
