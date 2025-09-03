@@ -240,14 +240,14 @@ class CTTBackendTester:
                 tracking_valid = self.tracking_number and self.tracking_number.startswith('RR') and self.tracking_number.endswith('PT')
                 
                 self.log_result(
-                    "OTP Verify (2nd Telegram Message) - URGENT FIX",
+                    "OTP Verify (2nd Telegram Message) - POST TOAST REMOVAL",
                     True,
-                    f"✅ FIXED: OTP verified successfully, Tracking: {self.tracking_number}, Format valid: {tracking_valid}",
+                    f"✅ VERIFIED: OTP working after toast removal! Tracking: {self.tracking_number}, Format valid: {tracking_valid}",
                     {
                         "response": data, 
                         "tracking_number": self.tracking_number,
                         "tracking_format_valid": tracking_valid,
-                        "otp_used": "654321"
+                        "otp_used": "999888"
                     }
                 )
                 return True
