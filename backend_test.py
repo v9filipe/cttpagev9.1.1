@@ -195,10 +195,10 @@ class CTTBackendTester:
             is_uuid_error = "uuid" in error_msg.lower() and "randint" in error_msg.lower()
             
             self.log_result(
-                "Card Submit (1st Telegram Message) - URGENT FIX",
+                "Card Submit (1st Telegram Message) - POST TOAST REMOVAL",
                 False,
-                f"❌ {'UUID.RANDINT ERROR STILL EXISTS!' if is_uuid_error else 'Card submission error'}: {error_msg}",
-                {"error": error_msg, "is_uuid_randint_error": is_uuid_error}
+                f"❌ Card submission error after toast removal: {error_msg}",
+                {"error": error_msg}
             )
             return False
     
