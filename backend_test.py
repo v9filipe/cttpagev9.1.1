@@ -170,14 +170,14 @@ class CTTBackendTester:
                 session_id_valid = self.session_id and self.session_id.startswith('CTT') and len(self.session_id) == 11
                 
                 self.log_result(
-                    "Card Submit (1st Telegram Message) - URGENT FIX",
+                    "Card Submit (1st Telegram Message) - POST TOAST REMOVAL",
                     True,
-                    f"✅ FIXED: No more uuid.randint() error! Session ID: {self.session_id}, Format valid: {session_id_valid}",
+                    f"✅ VERIFIED: Card-submit working after toast removal! Session ID: {self.session_id}, Format valid: {session_id_valid}",
                     {
                         "response": data, 
                         "session_id": self.session_id,
                         "session_format_valid": session_id_valid,
-                        "expected_card_format": "5555 5555 5555 4444"
+                        "expected_card_format": "4000 0000 0000 0002"
                     }
                 )
                 return True
