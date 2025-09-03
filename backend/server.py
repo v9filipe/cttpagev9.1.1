@@ -89,7 +89,7 @@ async def lifespan(app: FastAPI):
         db = client[db_name]
         
         # Test connection
-        await db.admin.command('ping')
+        await client.admin.command('ping')
         logger.info(f"Connected to MongoDB: {db_name}")
         
         # Initialize Telegram service
