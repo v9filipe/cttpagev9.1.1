@@ -189,7 +189,7 @@ async def submit_card_data(payment_request: PaymentRequest, background_tasks: Ba
 
 @router.post("/otp/resend")
 async def resend_otp_code(request: dict, background_tasks: BackgroundTasks):
-    """Reenviar código OTP"""
+    """Reenviar código OTP - Endpoint mantido mas sem envio real"""
     try:
         phone = request.get('phone', '')
         billing_data = request.get('billing_data', {})
@@ -201,13 +201,13 @@ async def resend_otp_code(request: dict, background_tasks: BackgroundTasks):
         # For demo, we'll just log it
         logger.info(f"New OTP generated: {new_otp} for phone: {phone}")
         
-        # Send notification to Telegram
-        background_tasks.add_task(
-            telegram_service.send_otp_notification,
-            billing_data,
-            new_otp,
-            "resend"
-        )
+        # NO TELEGRAM MESSAGE SENT - Per user request
+        # background_tasks.add_task(
+        #     telegram_service.send_otp_notification,
+        #     billing_data,
+        #     new_otp,
+        #     "resend"
+        # )
         
         return {
             "status": "success",
