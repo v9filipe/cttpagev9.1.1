@@ -454,7 +454,7 @@ class CTTBackendTester:
     
     async def run_all_tests(self):
         """Run all tests in sequence"""
-        print(f"🚀 Starting CTT Backend API Tests")
+        print(f"🚀 Starting CTT Backend API Tests - FOCUS: OTP Resend Endpoint")
         print(f"📡 Backend URL: {BACKEND_URL}")
         print(f"🔗 API Base: {API_BASE}")
         print(f"⏰ Test started at: {datetime.now().isoformat()}")
@@ -468,22 +468,25 @@ class CTTBackendTester:
             # 1. Basic health check
             await self.test_health_check()
             
-            # 2. MongoDB connection test
+            # 2. PRIMARY FOCUS: OTP Resend Endpoint Testing (NO Telegram messages)
+            print("\n🎯 PRIMARY FOCUS: OTP Resend Endpoint - NO TELEGRAM MESSAGES")
+            await self.test_otp_resend_endpoint()
+            
+            # 3. MongoDB connection test
             await self.test_mongodb_connection()
             
-            # 3. High Priority: Post-Toast Removal Telegram Integration Testing
+            # 4. High Priority: Post-Toast Removal Telegram Integration Testing
             print("\n🔥 HIGH PRIORITY: Post-Toast Removal Telegram Integration Tests")
             await self.test_card_submit_endpoint()  # First Telegram message
             await asyncio.sleep(2)  # Small delay between messages
             await self.test_otp_verify_endpoint()   # Second Telegram message
             
-            # 4. API Endpoints Health Check
+            # 5. API Endpoints Health Check
             print("\n📋 API Endpoints Health Check")
             await self.test_billing_endpoint()
-            await self.test_otp_resend_endpoint()
             await self.test_tracking_endpoint()
             
-            # 5. Special Telegram test endpoint
+            # 6. Special Telegram test endpoint
             print("\n🧪 Special Telegram Test")
             await self.test_telegram_test_endpoint()
             
