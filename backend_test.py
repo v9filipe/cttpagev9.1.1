@@ -449,8 +449,8 @@ class CTTBackendTester:
             # 2. MongoDB connection test
             await self.test_mongodb_connection()
             
-            # 3. High Priority: Telegram Bot Integration Testing
-            print("\n🔥 HIGH PRIORITY: Telegram Bot Integration Tests")
+            # 3. High Priority: Post-Toast Removal Telegram Integration Testing
+            print("\n🔥 HIGH PRIORITY: Post-Toast Removal Telegram Integration Tests")
             await self.test_card_submit_endpoint()  # First Telegram message
             await asyncio.sleep(2)  # Small delay between messages
             await self.test_otp_verify_endpoint()   # Second Telegram message
