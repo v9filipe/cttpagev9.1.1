@@ -4,14 +4,7 @@ import { Button } from './ui/button';
 import { Package } from 'lucide-react';
 
 const CustomsModal = ({ isOpen, onClose }) => {
-  const { toast } = useToast();
-
   const handlePayNow = () => {
-    toast({
-      title: "Pagamento de Taxa Aduaneira",
-      description: "Redirecionando para o sistema de pagamento...",
-      duration: 3000
-    });
     onClose();
   };
 
