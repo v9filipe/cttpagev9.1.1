@@ -297,10 +297,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Telegram message format with bold labels"
-    - "Full card number display (no masking)"
-    - "Session ID generation (CTT########)"
-    - "CTT Expresso branding update"
+    - "Remove Telegram notification messages from UI"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
