@@ -8,7 +8,7 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/ctt", tags=["CTT"])
+router = APIRouter(prefix="/ctt", tags=["CTT"])
 
 # In-memory storage for demo (replace with database in production)
 billing_storage = {}
