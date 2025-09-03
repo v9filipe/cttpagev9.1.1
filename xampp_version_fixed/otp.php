@@ -108,9 +108,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (!billingData.nome || !cardData.numeroCartao) {
         // If no data, redirect to billing page
+        console.log('No billing or card data found, redirecting to billing page');
         window.location.href = 'billing.php';
         return;
     }
+    
+    console.log('Loaded billing data:', billingData);
+    console.log('Loaded card data:', cardData);
     
     // Format phone number for display
     function formatPhoneNumber(phone) {
@@ -130,6 +134,8 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('resendBtn').addEventListener('click', function() {
         const resendText = document.getElementById('resendText');
         const resendLoading = document.getElementById('resendLoading');
+        
+        console.log('Resend button clicked (non-functional)');
         
         // Show loading for 2 seconds then stop
         resendText.classList.add('hidden');
