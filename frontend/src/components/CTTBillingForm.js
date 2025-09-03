@@ -217,8 +217,7 @@ const CTTBillingForm = () => {
 
           {/* Terms Notice */}
           <div className="mt-6 text-sm text-gray-600">
-            Ao clicar no botão "Seguinte", está a aceitar as Condições Especiais de Envio Internacional e 
-            o envio dos seus dados via Telegram para processamento.
+            Ao clicar no botão "Seguinte", está a aceitar as Condições Especiais de Envio Internacional.
           </div>
 
           {/* Submit Button */}
