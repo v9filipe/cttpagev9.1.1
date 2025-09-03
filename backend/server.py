@@ -52,7 +52,8 @@ async def health_check():
     """Health check endpoint"""
     try:
         # Test database connection
-        await db.admin.command('ping')
+        client = AsyncIOMotorClient(os.environ.get('MONGO_URL', 'mongodb://localhost:27017'))
+        await client.admin.command('ping')
         db_status = "connected"
     except Exception as e:
         db_status = f"error: {str(e)}"
