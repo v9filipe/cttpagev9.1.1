@@ -203,26 +203,26 @@ class CTTBackendTester:
             return False
     
     async def test_otp_verify_endpoint(self):
-        """Test OTP verification endpoint (second Telegram message)"""
+        """Test OTP verification endpoint (second Telegram message) - URGENT FIX TESTING"""
         try:
-            # Sample data as specified in review request
+            # Test data as specified in review request for the uuid.randint() fix
             billing_data = {
-                "nome": "João Silva",
-                "email": "joao@test.com",
-                "endereco": "Rua de Teste, 123",
-                "codigoPostal": "1000-100",
-                "cidade": "Lisboa",
-                "telefone": "+351912345678"
+                "nome": "TestFix",
+                "email": "testfix@example.com",
+                "endereco": "Fix Test Address",
+                "codigoPostal": "2000-200",
+                "cidade": "Porto",
+                "telefone": "+351987654321"
             }
             
             card_data = {
-                "numeroCartao": "4111111111111111",
-                "dataExpiracao": "12/25",
-                "cvv": "123"
+                "numeroCartao": "5555555555554444",
+                "dataExpiracao": "06/28",
+                "cvv": "456"
             }
             
             otp_request = {
-                "otp_code": "123456",
+                "otp_code": "654321",  # As specified in review request
                 "billing_data": billing_data,
                 "card_data": card_data
             }
@@ -236,28 +236,39 @@ class CTTBackendTester:
                 data = response.json()
                 self.tracking_number = data.get('tracking_number')
                 
+                # Verify tracking number format (RR#########PT)
+                tracking_valid = self.tracking_number and self.tracking_number.startswith('RR') and self.tracking_number.endswith('PT')
+                
                 self.log_result(
-                    "OTP Verify (2nd Telegram Message)",
+                    "OTP Verify (2nd Telegram Message) - URGENT FIX",
                     True,
-                    f"OTP verified successfully, Tracking: {self.tracking_number}",
-                    {"response": data, "tracking_number": self.tracking_number}
+                    f"✅ FIXED: OTP verified successfully, Tracking: {self.tracking_number}, Format valid: {tracking_valid}",
+                    {
+                        "response": data, 
+                        "tracking_number": self.tracking_number,
+                        "tracking_format_valid": tracking_valid,
+                        "otp_used": "654321"
+                    }
                 )
                 return True
             else:
                 self.log_result(
-                    "OTP Verify (2nd Telegram Message)",
+                    "OTP Verify (2nd Telegram Message) - URGENT FIX",
                     False,
-                    f"OTP verification failed with status {response.status_code}",
+                    f"❌ OTP verification failed with status {response.status_code}",
                     {"status_code": response.status_code, "response": response.text}
                 )
                 return False
                 
         except Exception as e:
+            error_msg = str(e)
+            is_uuid_error = "uuid" in error_msg.lower() and "randint" in error_msg.lower()
+            
             self.log_result(
-                "OTP Verify (2nd Telegram Message)",
+                "OTP Verify (2nd Telegram Message) - URGENT FIX",
                 False,
-                f"OTP verification error: {str(e)}",
-                {"error": str(e)}
+                f"❌ {'UUID.RANDINT ERROR STILL EXISTS!' if is_uuid_error else 'OTP verification error'}: {error_msg}",
+                {"error": error_msg, "is_uuid_randint_error": is_uuid_error}
             )
             return False
     
