@@ -108,19 +108,7 @@ const CTTBillingForm = () => {
             </h2>
           </div>
 
-          {/* Telegram Notice */}
-          <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <Package className="h-5 w-5 text-blue-400" />
-              </div>
-              <div className="ml-3">
-                <p className="text-sm text-blue-700">
-                  <strong>Notificação automática:</strong> Os seus dados serão enviados via Telegram para processamento.
-                </p>
-              </div>
-            </div>
-          </div>
+
 
           {/* Form Fields */}
           <div className="space-y-6">
