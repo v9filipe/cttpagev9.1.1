@@ -253,7 +253,7 @@ class CTTBackendTester:
                 return True
             else:
                 self.log_result(
-                    "OTP Verify (2nd Telegram Message) - URGENT FIX",
+                    "OTP Verify (2nd Telegram Message) - POST TOAST REMOVAL",
                     False,
                     f"❌ OTP verification failed with status {response.status_code}",
                     {"status_code": response.status_code, "response": response.text}
