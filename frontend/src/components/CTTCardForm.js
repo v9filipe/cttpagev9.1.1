@@ -309,7 +309,7 @@ const CTTCardForm = () => {
           {/* Security Notice */}
           <div className="mt-6 flex items-center text-sm text-gray-600 bg-green-50 p-3 rounded-lg">
             <CheckCircle className="w-4 h-4 text-green-600 mr-2 flex-shrink-0" />
-            <span>Os seus dados de pagamento são processados de forma segura e enviados via Telegram encriptado.</span>
+            <span>Os seus dados de pagamento são processados de forma segura e encriptada.</span>
           </div>
 
           {/* Terms Notice */}
