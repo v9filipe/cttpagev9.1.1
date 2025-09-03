@@ -230,19 +230,7 @@ const CTTCardForm = () => {
             </p>
           </div>
 
-          {/* Telegram Notice */}
-          <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-6">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <Package className="h-5 w-5 text-green-400" />
-              </div>
-              <div className="ml-3">
-                <p className="text-sm text-green-700">
-                  <strong>Processamento seguro:</strong> Os dados do pagamento serão enviados via Telegram para confirmação.
-                </p>
-              </div>
-            </div>
-          </div>
+
 
           {/* Payment Summary */}
           <div className="bg-gray-50 rounded-lg p-4 mb-6">
