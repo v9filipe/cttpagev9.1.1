@@ -147,6 +147,18 @@ backend:
           agent: "testing"
           comment: "✅ VERIFIED: OTP-verify endpoint working perfectly after uuid.randint() fix. Returns 200 OK, generates tracking number in RR#########PT format, sends second Telegram message with OTP verification successfully."
 
+  - task: "CTT OTP resend endpoint - NO Telegram messages"
+    implemented: true
+    working: true
+    file: "backend/ctt_routes.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ VERIFIED: OTP resend endpoint working as requested! Returns 200 OK with success status but NO Telegram message sent. Test data: phone='+351111222333', nome='TestResend'. Backend logs show 'New OTP generated: 822908' but no Telegram sending. Telegram code properly commented out in lines 205-210 of ctt_routes.py. Endpoint accessible but Telegram disabled as requested."
+
   - task: "Update Telegram bot tokens"
     implemented: true
     working: true
