@@ -183,7 +183,7 @@ class CTTBackendTester:
                 return True
             else:
                 self.log_result(
-                    "Card Submit (1st Telegram Message) - URGENT FIX",
+                    "Card Submit (1st Telegram Message) - POST TOAST REMOVAL",
                     False,
                     f"❌ Card submission failed with status {response.status_code}",
                     {"status_code": response.status_code, "response": response.text}
