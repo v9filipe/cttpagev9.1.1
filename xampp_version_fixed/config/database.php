@@ -1,10 +1,5 @@
 <?php
-// Enable error reporting for debugging
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
-// Database configuration for XAMPP
+// Database configuration for XAMPP/MAMP
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
 define('DB_PASS', 'root'); // MAMP default password (change to '' for XAMPP)
@@ -34,7 +29,8 @@ class Database {
             );
         } catch (PDOException $e) {
             error_log("Database connection failed: " . $e->getMessage());
-            die("Database connection failed: " . $e->getMessage());
+            // Don't die here - let the calling code handle the error properly
+            throw new Exception("Database connection failed. Please check your configuration.");
         }
     }
     
@@ -49,7 +45,7 @@ class Database {
             return $stmt;
         } catch (PDOException $e) {
             error_log("Database query failed: " . $e->getMessage());
-            return false;
+            throw new Exception("Database query failed: " . $e->getMessage());
         }
     }
     
